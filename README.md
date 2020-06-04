@@ -9,12 +9,13 @@ University of California, Riverside
 yzhai003@ucr.edu
 ```
 ## Files
-|
-|-src: Qualifier Inference code for UBITect
-|-KLEE: Under constraint symbolic execution code and z3 as the contraint solver
-|-llvm: The source code for llvm, clang and the tag pass
-|-example: An example showcase how UBITect works in below
-
+|  
+|-src: Qualifier Inference code for UBITect  \
+|-KLEE: Under constraint symbolic execution code and z3 as the contraint solver  \
+|-llvm: The source code for llvm, clang and the tag pass  \
+|-example: An example showcase how UBITect works in below  \
+|-Makefile: Used to compile qualifier inference code in src/  \
+|-path_verify.py: Wrapper to run KLEE 
 ## How to use UBITect:
 ```sh
     #change to the code folder
