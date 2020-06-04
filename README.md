@@ -12,14 +12,14 @@ yzhai003@ucr.edu
 |  
 |-src: Qualifier Inference code for UBITect  \
 |-KLEE: Under constraint symbolic execution code and z3 as the contraint solver  \
-|-llvm: The source code for llvm, clang and the tag pass [^tag] \
+|-llvm: The source code for llvm, clang and the tag pass[^tag] \
 |-example: An example showcase how UBITect works in below  \
 |-Makefile: Used to compile qualifier inference code in src/  \
 |-path_verify.py: Wrapper to run KLEE \
 [^tag]: The tag pass is used to give every basic block in the folder an identifier. By default, llvm names the basic block as 1%, 2%, etc. This pass rename the basic blocks with
 bitcode name, function name and basic block number.
 
-## How to use UBITect:
+##Installation Instructions:
 ```sh
     #change to the code folder
     $cd UBITect
@@ -29,8 +29,13 @@ bitcode name, function name and basic block number.
     #build the UBITect
     $cd ../../
     $make
-	
+
+    
+
 ```
+
+
+## How to use UBITect:
 Build the bitcode file with -O0 optimization and -g option, then tag it:
 ```sh
     $opt -load dir/to/llvm/build/lib/bbTaglib.so -bbtag bitcode-before-tag >>bitcode-after-tag
