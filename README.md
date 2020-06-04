@@ -21,7 +21,7 @@ yzhai003@ucr.edu
     #change to the code folder
     $cd UBITect
     #build LLVM used
-    $cd llvm.src
+    $cd llvm
     $./build-llvm.sh
     #build the UBITect
     $cd ../../
