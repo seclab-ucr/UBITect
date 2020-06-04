@@ -46,7 +46,7 @@ Now the qualifeir inference is under path/to/UBITect/build/bin/ubitect and klee 
 Use path/to/UBITect/build/ubitect to generate the potential warnings:
 ```sh
     # To analyze a single bitcode file, say "test.bc", run:
-    $./build/ubitect -ubi-analysis test.bc 
+    $./build/ubitect -ubi-analysis abs/path/to/test.bc 
     # To analyze a list of bitcode files, put the absolute paths of the bitcode files in a file, say "bc.list", then run:
     $./build/ubitect -ubi-analysis @bc.list
 ```
