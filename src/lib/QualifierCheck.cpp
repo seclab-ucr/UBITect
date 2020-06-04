@@ -18,9 +18,6 @@
 #include <cstring>
 #include <deque>
 #define STACK_CHECK
-//#define DUBUG_CHECK
-//#define _PRINT_INST
-//#define CALL_DBG
 //The file used for putting json obj
 void FuncAnalysis::QualifierCheck()
 {
@@ -34,9 +31,6 @@ void FuncAnalysis::QualifierCheck()
         auto inst = itr.getInstructionIterator();
         worklist.push_back(&*inst);
     }
-    #ifdef DEBUG_TITLE
-    OP<<"Inside qualifier check:\n";
-    #endif
     std::set<const Instruction *> visit;
     std::string  warningTy = "OTHER";
 

@@ -22,25 +22,6 @@
 #include "CallGraph.h"
 #include "Helper.h"
 
-//#define SERIALIZATION
-//#define LOADSUM
-#define RUN_ON_FUNC
-//#define _PRINT_NODEFACTORY
-//#define _PRINT_INST
-//#define DEBUG_TITLE
-//#define _PRINT_SUMMARY
-//#define _PRINT_SUMNODEFACT
-//#define _PRINT_PTS
-//#define IN
-//#define OUT
-//#define gep_check
-// #define _INIT_NF
-//#define _DBG
-#define _FIND_DEP
-//#define  _PRINT_SCC
-//#define PRINT_BIGCIRCLE
-//#define CAL_BIGCIRCLE
-//#define COLLECT
 #define CAL_STACKVAR
 using namespace llvm;
 
@@ -112,9 +93,7 @@ bool QualifierAnalysis::doModulePass(llvm::Module * M){
 #endif
 
         if (Ctx->ReadyList.find(F) != Ctx->ReadyList.end() && (!Ctx->Visit[F])) {
-	    #ifdef RUN_ON_FUNC
             runOnFunction(F, true);
-	    #endif
             FCounter++;
             Ctx->Visit[F] = true;
             for (Function *caller : Ctx->CalledMaps[F]) {
@@ -160,7 +139,6 @@ void fillOrder(std::map<llvm::Function*, std::set<llvm::Function*>> &depCG,llvm:
 
 void QualifierAnalysis::collectRemaining() {
     //For functions that does not visited, find the path 
-    #ifdef _FIND_DEP
         int count = 0;
 	//The new graph we need to calculate0
 	std::map<llvm::Function*, std::set<llvm::Function*>> depCG;
@@ -174,31 +152,12 @@ void QualifierAnalysis::collectRemaining() {
 			}
 		}
         }
-	#ifdef _PRINT_DEPCG
-        OP<<count<<" Functions are enrolled with dependecies.\n";
-	
-	OP<<"dep CG whose size is "<<depCG.size()<<"\n";
-	for (auto item : depCG) {
-		OP<<item.first->getName().str()<<" dep calls: ";
-		for (auto i: item.second) {
-			OP<<i->getName().str()<<"/";
-		}
-		OP<<"\n";
-	}
-	#endif
         std::set<llvm::Function *> depVisit;
 	std::stack<llvm::Function *> Stack;
 
         for (auto i : depCG) {
                 if (depVisit.find(i.first) != depVisit.end())
                         continue;
-		/*
-                if (i.second.find(i.first) != i.second.end()){
-                        OP<<"target circle path: \n";
-                        OP<<i.first->getName().str()<<"->"<<i.first->getName().str()<<"\n";
-                        depVisit.insert(i.first);
-                        continue;
-                }*/
 		fillOrder(depCG, i.first, depVisit, Stack);
         }
 
@@ -230,25 +189,6 @@ void QualifierAnalysis::collectRemaining() {
 		if (sc.size() > 1)
 			Ctx->SCC.push_back(sc);
 	}
-	#ifdef _PRINT_SCC
-	OP<<"SCC size(>1) = "<<Ctx->SCC.size()<<"\n";
-	OP<<numRec<<" recursive functions.\n";
-	OP<<numInd<<" ind functions.\n";
-	OP<<"recursive functions: \n";
-	for (auto item : Ctx->rec) {
-		OP<<item->getName().str()<<" in module "<<item->getParent()->getName().str()<<"\n";
-	}
-	OP<<"print each SCC:\n";
-	for (auto item : Ctx->SCC) {
-		OP<<"scc size : "<<item.size()<<"\n";
-		for (auto it : item) {
-			OP<<it->getName().str()<<"/";
-		}
-		OP<<"\n";
-		if (item.size() > 100)
-			bigCircle = item;
-	}
-	#endif
 	int noVisit = 0;
 	for(auto i : Ctx->Visit){
 	    if(!i.second) {
@@ -259,92 +199,6 @@ void QualifierAnalysis::collectRemaining() {
 	//calculate the summary for functions in SCC and add them to the ready listi
 	calSumForRec(Ctx->rec);
 	calSumForScc(Ctx->SCC);
-	#endif
-	//Now we get the big circle, build the depCG for the element in big circle, get the indirect call for it.
-	//std::map<llvm::Function*, std::set<llvm::Function*>> circleCG;
-	#ifdef PRINT_BIGCIRCLE
-	OP<<"Indirect call of the big loop : \n";
-	int direct = 0;
-	int indirect = 0;
-	llvm::Function* popCaller;
-	llvm::Function* popCallee;
-	int popCallerCount=0;
-	std::map<llvm::Function*, int> calleeTimes;
-
-	
-	for (auto item : bigCircle) {
-		int localInd = 0;
-	    for (auto callee : depCG[item]) {
-		std::vector<llvm::Function*>::iterator iter = std::find(bigCircle.begin(), bigCircle.end(), callee);
-		if (iter != bigCircle.end()) {
-		    if (Ctx->DirectCallMap[item].find(callee) != Ctx->DirectCallMap[item].end()) {
-			direct++;
-		    }
-		    else {
-			//indirect call
-			indirect++;
-			localInd ++;
-			OP<<item->getName().str()<<" --> "<<callee->getName().str()<<"\n";
-
-			if (calleeTimes.find(callee) != calleeTimes.end())
-			    calleeTimes[callee]++;
-			else
-			    calleeTimes[callee] = 1;
-		    }
-		}
-	    }
-	    if (localInd > popCallerCount) {
-		popCaller = item;
-		popCallerCount = localInd;
-	    }
-	}
-	OP<<direct<<" direct calls in big Circle while "<<indirect<<" indirect calls in big circle.\n";
-	OP<<"The most popular caller is: "<<popCaller->getName().str()<<": "<<popCallerCount<<" times.\n";
-	int popCalleeCount = 0;
-	for (auto item: calleeTimes){
-		if (item.second > popCalleeCount) {
-			popCalleeCount = item.second;
-			popCallee = item.first;
-		}
-	}
-	OP<<"The most popular callee is: "<<popCallee->getName().str()<<": "<<popCalleeCount<<" times.\n";
-	#endif
-	#ifdef CAL_BIGCIRCLE
-	OP<<"recursively calculate the big Circle:\n";
-	int readyCount = 0;
-	std::queue<llvm::Function*> scQueue;
-        for (auto item : bigCircle) {
-            scQueue.push(item);
-        }	
-	while (!scQueue.empty()) {
-                llvm::Function *func = scQueue.front();
-                scQueue.pop();
-                
-		Summary in;
-                std::string fname = getScopeName(func);
-                if(Ctx->FSummaries.find(func) != Ctx->FSummaries.end()) {
-                        in.copySummary(in, Ctx->FSummaries[func], func);
-                }
-                runOnFunction(func, false);
-                if(Ctx->FSummaries[func].equal(in))
-                {
-                        readyCount++;
-                        Ctx->ChangeMap[func] = false;
-                        Ctx->ReadyList.insert(func);
-                        for (Function *caller : Ctx->CalledMaps[func]) {
-                            Ctx->RemainedFunction[caller]--;
-                            if (Ctx->RemainedFunction[caller] == 0) {
-                                 Ctx->ReadyList.insert(caller);
-                            }
-                        }
-                }
-                else{
-                        scQueue.push(func);
-                        Ctx->ChangeMap[func] = true;
-                }
-            }	
-
-#endif
 }
 void QualifierAnalysis::calDepFuncs() {
 }
@@ -357,10 +211,7 @@ bool QualifierAnalysis::doFinalization(llvm::Module *M) {
         Function *F = &*f;
 
         if (Ctx->ReadyList.find(F) != Ctx->ReadyList.end() && (!Ctx->Visit[F])) {
-            OP<<"runOnFunction"<<F->getName().str()<<"\n";
-            #ifdef RUN_ON_FUNC
             runOnFunction(F, true);
-            #endif
             FCounter++;
             OP << FCounter << " Function Finished!\n";
             Ctx->Visit[F] = true;
@@ -1349,7 +1200,6 @@ void QualifierAnalysis::calSumForRec (std::set<llvm::Function*>& rec) {
 	int readyCount = 0;
 	for (auto item : rec) {
 	    Function *func = item;
-	    #ifdef RUN_ON_FUNC
 	    while (Ctx->ChangeMap[func]) {
 		
 	    	Summary in;
@@ -1368,7 +1218,6 @@ void QualifierAnalysis::calSumForRec (std::set<llvm::Function*>& rec) {
 			Ctx->ChangeMap[func] = true;
 	    	}	
 	    }//while (Ctx->ChangeMap[func]) 
-	    #endif
 	    //update the ready list
 	    Ctx->ReadyList.insert(func);
 	    readyCount++;

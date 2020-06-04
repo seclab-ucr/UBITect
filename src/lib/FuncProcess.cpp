@@ -240,7 +240,6 @@ void FuncAnalysis::processCopyFuncs (Instruction *I, llvm::Function* Callee, boo
         {
             //unsigned objSize = nodeFactory.getObjectSize(obj);
             //considering memcpy to universal ptr node
-	    // OP<<"obj = "<<obj<<"\n";
 	    if(obj<=nodeFactory.getConstantIntNode())
 		continue;
             for(auto srcObj : nPtsGraph[I][srcIndex])
@@ -251,13 +250,10 @@ void FuncAnalysis::processCopyFuncs (Instruction *I, llvm::Function* Callee, boo
                     {
                         qualiReq[srcObj] = _ID;
 			out.at(srcObj) = _ID;
-                        //DFS(I, srcObj);
                     } 
                 }
-                //unsigned objSize = nodeFactory.getObjectSize(srcObj);
                 for (int i = 0; i < objSize; i++)
                 {
-		  // OP<<"srcObj+i ="<<srcObj+i<<"\n"; 
                     //considering memcpy from universal ptr node
                     int srcQuali = 0;
                     if (srcObj <= nodeFactory.getConstantIntNode())
@@ -271,17 +267,10 @@ void FuncAnalysis::processCopyFuncs (Instruction *I, llvm::Function* Callee, boo
 			    for (auto aa : nAAMap[I][srcObj]){
 			    	relatedNode[obj+i].insert(relatedNode[aa].begin(), relatedNode[aa].end());
 			    }
-			#ifdef _RELATED
-			    OP<<"related node for "<<obj+i<<"\n";
-			    for (auto item : relatedNode[obj+i])
-				OP<<item<<"/";
-			    OP<<"\n";
-			#endif
 			}
                     }
 		    if (obj + i >= numNodes)
 			break;
-          //         OP<<"obj + i = "<<obj + i<<"srcObj + i = "<<srcObj + i<<", srcQuali = "<<srcQuali<<"\n";
                     if (!init || srcQuali == _ID)
                     {
                         out.at(obj + i) = srcQuali;
@@ -412,13 +401,6 @@ void FuncAnalysis::processTransferFuncs (Instruction *I, llvm::Function* Callee,
 void FuncAnalysis::processFuncs (llvm::Instruction *I, llvm::Function* Callee, bool init, std::vector<int>& in,std::vector<int>& out)
 {
     //only update the arguments and the return value from Callees, req propagation is done later in summarizeFuncs().   
-#ifdef PRINT_SUMF 
-    OP<<"Functions in Ctx->FSummaries: \n";
-    for (auto item : Ctx->FSummaries)
-    {
-	OP<<"--Addr : "<<item.first<<", name: "<<item.first->getName().str()<<"\n";
-    }
-#endif
     if (Callee->empty()) {
 		auto FIter = Ctx->Funcs.find(Callee->getName().str());
 		if (FIter != Ctx->Funcs.end()) {
@@ -429,8 +411,8 @@ void FuncAnalysis::processFuncs (llvm::Instruction *I, llvm::Function* Callee, b
         return ;
     }
     std::set<const llvm::Value*> reqVisit;
-    //Insert the callee's related BC to the caller
-    #ifdef _LINK
+    //Insert the callee's related BC to the caller in the mode of multi-layer call relations
+    #ifdef ML_MODE
     for (auto item: Ctx->FSummaries[Callee].relatedBC) {
 	fSummary.relatedBC.insert(item);
     }
@@ -444,7 +426,6 @@ void FuncAnalysis::processFuncs (llvm::Instruction *I, llvm::Function* Callee, b
         calleeArgs.push_back(arg);
     }
     int sumNumNodes = Ctx->FSummaries[Callee].noNodes;
-    //for (int i = 0; i < sumNumNodes; i++)
     //update the argument and propagate the requirement
     for (int argNo = 0; argNo < CI->getNumArgOperands(); argNo++)
     {
@@ -469,7 +450,6 @@ void FuncAnalysis::processFuncs (llvm::Instruction *I, llvm::Function* Callee, b
                     if (nQualiArray[I].at(obj - objOffset + i) == _UNKNOWN)
                     {   
                         out.at(obj - objOffset + i) = _ID;
-                        //DFS(I, obj - objOffset + i);
                     }
                 }
             }
@@ -482,12 +462,10 @@ void FuncAnalysis::processFuncs (llvm::Instruction *I, llvm::Function* Callee, b
         {
             if (out.at(argNode) == _UNKNOWN)
             {
-                //out.at(argNode) = _ID;
 		reqVisit.clear();
                 setReqFor(I, CI->getArgOperand(argNo), out, reqVisit);
             }
         }
-        //Ctx->FSummaries[Callee].summary();
 	unsigned numNodes = nodeFactory.getNumNodes();
         for (auto sumObj : Ctx->FSummaries[Callee].sumPtsGraph[sumArgNode])
         {
@@ -581,7 +559,6 @@ void FuncAnalysis::processFuncs (llvm::Instruction *I, llvm::Function* Callee, b
                     if (sumObjOffset < objOffset)
                         continue;
                      
-                    //unsigned objSize = nodeFactory.getObjectSize(obj);
                     for (unsigned i = objOffset; i > 0; i--)
                     {
                         if (Ctx->FSummaries[Callee].updateVec[sumObj - i] != _UNKNOWN)
@@ -893,13 +870,6 @@ void FuncAnalysis::checkTransferFuncs(llvm::Instruction *I, llvm::Function *Call
 }
 void FuncAnalysis::checkFuncs(llvm::Instruction *I, llvm::Function *Callee)
 {
-    #ifdef PRINT_CURRENT_SUM
-    OP<<"current set of fsum:\n";
-    for (auto sum : Ctx->FSummaries)
-    {
-        OP<<sum.first<<": "<<sum.first->getName().str()<<"\n";
-    }
-    #endif
     if (Callee->empty()) {
 	auto FIter = Ctx->Funcs.find(Callee->getName().str());
         if (FIter != Ctx->Funcs.end()) {
@@ -910,7 +880,6 @@ void FuncAnalysis::checkFuncs(llvm::Instruction *I, llvm::Function *Callee)
     {
         return;
     }
-    //Ctx->FSummaries[Callee].summary();
     CallInst *CI = dyn_cast<CallInst>(I);
     Instruction *entry = &(F->front().front());
     NodeIndex entryIndex = nodeFactory.getValueNodeFor(entry);
@@ -940,9 +909,6 @@ void FuncAnalysis::checkFuncs(llvm::Instruction *I, llvm::Function *Callee)
                     OP<<"[trace] In function @"<<F->getName().str()<<" Instruction:"<<*I<<"\n";
 		    #endif
                     visit.clear();
-		    #ifdef WA_BC
-		    addRelatedBC(I, argNode, Callee);
-		    #endif
                     printRelatedBB(argNode, I, visit, eToS[NORMAL_PTR], argNo);
 		    warningSet.insert(argNode);	    
 		}
@@ -970,10 +936,6 @@ void FuncAnalysis::checkFuncs(llvm::Instruction *I, llvm::Function *Callee)
 			#endif
                         visit.clear();
 			warningTy = eToS[getFieldTy(CI->getArgOperand(argNo)->getType(), i)];
-			#ifdef WA_BC
-			addRelatedBC(I, argNode, Callee);
-			addRelatedBC(I, obj - objOffset + i, Callee);
-                        #endif
 			printRelatedBB(obj - objOffset + i, I, visit, warningTy, argNo, i);
 			warningSet.insert(obj - objOffset + i);
                     }
@@ -1001,9 +963,6 @@ void FuncAnalysis::checkFuncs(llvm::Instruction *I, llvm::Function *Callee)
                 OP<<"[trace] In function @"<<F->getName().str()<<" Instruction:"<<*I<<"\n";
 		#endif
                 visit.clear();
-		#ifdef WA_BC
-		addRelatedBC(I, argNode, Callee);
-                #endif
 		printRelatedBB(argNode, I, visit, eToS[NORMAL_PTR], argNo);
 		warningSet.insert(argNode);
 	    }
@@ -1065,10 +1024,6 @@ void FuncAnalysis::checkFuncs(llvm::Instruction *I, llvm::Function *Callee)
                                 OP<<"[trace] In function @"<<F->getName().str()<<" Instruction:"<<*I<<"\n";
 				#endif
                                 visit.clear();
-				#ifdef WA_BC
-				addRelatedBC(I, argNode, Callee);
-				addRelatedBC(I, obj, Callee);
-				#endif
                                 printRelatedBB(obj, I, visit, "DATA", argNo);
 				warningSet.insert(obj);
 			    }
@@ -1091,10 +1046,6 @@ void FuncAnalysis::checkFuncs(llvm::Instruction *I, llvm::Function *Callee)
 			    #endif
 			    warningTy = eToS[getFieldTy(CI->getArgOperand(argNo)->getType(), i)];
                             visit.clear();
-			    #ifdef WA_BC
-			    addRelatedBC(I, argNode, Callee);
-			    addRelatedBC(I, obj+i, Callee);
-			    #endif
                             printRelatedBB(obj+i, I, visit, warningTy, argNo, i);
 			    warningSet.insert(obj+i);
 			}
@@ -1120,8 +1071,6 @@ void FuncAnalysis::checkFuncs(llvm::Instruction *I, llvm::Function *Callee)
 			    #endif
                             visit.clear();
 			    warningTy = eToS[getFieldTy(CI->getArgOperand(argNo)->getType(), i)];
-			    addRelatedBC(I, argNode, Callee);
-			    addRelatedBC(I, obj-i, Callee);
                             printRelatedBB(obj-i, I, visit, warningTy, argNo, objOffset-i);
 			    warningSet.insert(obj-i);
                         }
@@ -1255,24 +1204,3 @@ void FuncAnalysis::propFuncs(llvm::Instruction *I, llvm::Function *Callee, int* 
         }
     }
 }
-#ifdef dbg
-void printAllocationBB(llvm::Instruction *I)
-{
-    switch(I->getOpcode())
-    {
-        case Instruction::Load:
-        {
-            //Find the allocation sight
-            if(llvm::AllocaInst *AI = dyn_cast<AllocaInst*>(I->getOperand(0)))
-            {
-                OP<<"---related BB: "<<*AI<<"\n";
-                return;
-            }
-            else{
-                printAllocationBB(I->getOperand(0));
-            }
-            
-        }
-    }
-}
-#endif

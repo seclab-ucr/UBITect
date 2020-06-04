@@ -12,19 +12,12 @@
 #include <cstring>
 #include <deque>
 
-//#define INOUT
-//#define DEBUG_TITLE
-//#define _PRINT_INST
 void AAMapMerge(AAMap &, AAMap &);
 void FuncAnalysis::computeAASet ()
 {
     AAMap in;
     AAMap out;
     AAMap old;
-
-    #ifdef  DEBUG_TITLE
-    OP<<"inside compute aa set:\n";
-    #endif
 
     const DataLayout *DL = &(F->getParent()->getDataLayout());
     std::deque<Instruction *> worklist;
@@ -72,27 +65,7 @@ void FuncAnalysis::computeAASet ()
         else{
             Instruction * prev = I->getPrevNode();
             in = nAAMap[prev];
-            //AAMapMerge(in, prev);
         }
-        #ifdef _PRINT_INST
-        OP<<*I<<"\n";
-        #endif
-        #ifdef INOUT
-            OP<<*I<<"\n";
-        #endif
-        
-        #ifdef INOUT
-            OP<<"============in============\n";
-            for(auto i : in)
-            {
-                OP<<i.first<<":<";
-                for(auto item : i.second)
-                {
-                    OP<<item<<",";
-                }
-                OP<<">\n";
-            }
-        #endif
         
         switch (I -> getOpcode())
         {
@@ -317,20 +290,6 @@ void FuncAnalysis::computeAASet ()
             }
         }//switch (I -> getOpcode())
         nAAMap[I] = out;
-        #ifdef INOUT
-        OP<<"\n============out============\n";
-        for(auto i : out)
-        {
-	    //if (nAAMap[I][i] == old[i])
-	//	continue;
-            OP<<i.first<<":<";
-            for(auto item : i.second)
-            {
-                OP<<item<<",";
-            }
-            OP<<">\n";
-        }
-        #endif
 
          //push the succ of changed node
         if(nAAMap[I] != old)
