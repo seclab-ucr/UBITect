@@ -1,0 +1,120 @@
+QualifierAnalysis.cpp:    OP << "NodeFactory:\n";
+QualifierAnalysis.cpp:            assert (valNode != AndersNodeFactory::InvalidIndex && "Failed to find alloca value node");
+QualifierAnalysis.cpp:                assert(ptrNode != AndersNodeFactory::InvalidIndex && "Failed to find load operand node");
+QualifierAnalysis.cpp:                assert(valNode != AndersNodeFactory::InvalidIndex && "Failed to find load value node");
+QualifierAnalysis.cpp:            assert(dstNode != AndersNodeFactory::InvalidIndex && "Failed to find store dst node");
+QualifierAnalysis.cpp:            if (srcNode == AndersNodeFactory::InvalidIndex) {
+QualifierAnalysis.cpp:            // assert(srcIndex != AndersNodeFactory::InvalidIndex && "Failed to find store src node");
+QualifierAnalysis.cpp:            assert(srcNode != AndersNodeFactory::InvalidIndex && "Failed to find gep src node");
+QualifierAnalysis.cpp:            assert(dstNode != AndersNodeFactory::InvalidIndex && "Failed to find gep dst node");
+QualifierAnalysis.cpp:                assert(dstNode != AndersNodeFactory::InvalidIndex && "Failed to find phi dst node");
+QualifierAnalysis.cpp:                    assert(srcNode != AndersNodeFactory::InvalidIndex && "Failed to find phi src node");
+QualifierAnalysis.cpp:            assert(dstNode != AndersNodeFactory::InvalidIndex && "Failed to find bitcast dst node");
+QualifierAnalysis.cpp:            assert(srcNode != AndersNodeFactory::InvalidIndex && "Failed to find bitcast src node");
+QualifierAnalysis.cpp:                assert(srcNode != AndersNodeFactory::InvalidIndex && "Failed to find trunc src node");
+QualifierAnalysis.cpp:                assert(dstNode != AndersNodeFactory::InvalidIndex && "Failed to find trunc dst node");
+QualifierAnalysis.cpp:            assert(dstNode != AndersNodeFactory::InvalidIndex && "Failed to find inttoptr dst node");
+QualifierAnalysis.cpp:            assert(srcNode != AndersNodeFactory::InvalidIndex && "Failed to find inttoptr src node");
+QualifierAnalysis.cpp:            assert(dstNode != AndersNodeFactory::InvalidIndex && "Failed to find inttoptr dst node");
+QualifierAnalysis.cpp:            assert(srcNode != AndersNodeFactory::InvalidIndex && "Failed to find inttoptr src node");
+QualifierAnalysis.cpp:                assert(dstNode != AndersNodeFactory::InvalidIndex && "Failed to find select dst node");
+QualifierAnalysis.cpp:                assert(srcNode != AndersNodeFactory::InvalidIndex && "Failed to find select src node 1");
+QualifierAnalysis.cpp:                assert(srcNode != AndersNodeFactory::InvalidIndex && "Failed to find select src node 2");
+QualifierAnalysis.cpp:                assert(dstNode != AndersNodeFactory::InvalidIndex && "Failed to find va_arg dst node");
+QualifierAnalysis.cpp:                assert(vaNode != AndersNodeFactory::InvalidIndex && "Failed to find va_arg node");
+QualifierAnalysis.cpp:                assert(dstNode != AndersNodeFactory::InvalidIndex && "Failed to find call dst node");
+QualifierAnalysis.cpp:                assert(valNode != AndersNodeFactory::InvalidIndex && "Failed to find call return value node");
+QualifierAnalysis.cpp:                    assert(retNode != AndersNodeFactory::InvalidIndex && "Failed to find call return node");
+QualifierAnalysis.cpp:            if(fSummary.sumNodeFactory.getObjectNodeFor(F) != AndersNodeFactory::InvalidIndex)
+QualifierAnalysis.cpp:            if(sumArgObjNode != AndersNodeFactory::InvalidIndex)
+QualifierAnalysis.cpp:    OP << "sumNodeFactory:\n";
+QualifierAnalysis.cpp:        assert(valNode != AndersNodeFactory::InvalidIndex && "Failed to find castinst node");
+FuncProcess.cpp:			    if (argNoIndex == AndersNodeFactory::InvalidIndex){
+FuncProcess.cpp:            if (argNoIndex == AndersNodeFactory::InvalidIndex && argOffset == 0){
+FuncProcess.cpp:	    if (argNoIndex == AndersNodeFactory::InvalidIndex)
+FuncProcess.cpp:                            if (argNoIndex == AndersNodeFactory::InvalidIndex)
+FuncProcess.cpp:        assert(argNode != AndersNodeFactory::InvalidIndex && "Failed to find arg node");
+FunctionSummary.h:        errs()<<"sumNodeFactory:\n";
+QualifierCheck.cpp:                assert(opIndex != AndersNodeFactory::InvalidIndex && "Failed to find load operand node");
+QualifierCheck.cpp:                //assert(valIndex != AndersNodeFactory::InvalidIndex && "Failed to find load value node");
+QualifierCheck.cpp:                if (srcIndex == AndersNodeFactory::InvalidIndex) {
+QualifierCheck.cpp:                    // assert(srcIndex != AndersNodeFactory::InvalidIndex && "Failed to find store src node");
+QualifierCheck.cpp:                assert(dstIndex != AndersNodeFactory::InvalidIndex && "Failed to find store dst node");
+QualifierCheck.cpp:                assert(op0Index != AndersNodeFactory::InvalidIndex && "Failed to find node for op0");
+QualifierCheck.cpp:                assert(op1Index != AndersNodeFactory::InvalidIndex && "Failed to find node for op1");
+QualifierCheck.cpp:                assert(conIndex != AndersNodeFactory::InvalidIndex && "Failed to find node for condition");
+NodeFactory.cpp:const unsigned AndersNodeFactory::InvalidIndex = std::numeric_limits<unsigned int>::max();
+NodeFactory.cpp:AndersNodeFactory::AndersNodeFactory() {
+NodeFactory.cpp:NodeIndex AndersNodeFactory::createValueNode(const Value* val) {
+NodeFactory.cpp:NodeIndex AndersNodeFactory::createObjectNode(const Value* val) {
+NodeFactory.cpp:NodeIndex AndersNodeFactory::createObjectNode(const NodeIndex base, const unsigned offset) {
+NodeFactory.cpp:NodeIndex AndersNodeFactory::getValueNodeFor(const Value* val) {
+NodeFactory.cpp:NodeIndex AndersNodeFactory::getValueNodeForConstant(const llvm::Constant* c) {
+NodeFactory.cpp:NodeIndex AndersNodeFactory::getObjectNodeFor(const Value* val) {
+NodeFactory.cpp:NodeIndex AndersNodeFactory::getObjectNodeForConstant(const llvm::Constant* c) {
+NodeFactory.cpp:NodeIndex AndersNodeFactory::getReturnNodeFor(const llvm::Function* f) {
+NodeFactory.cpp:NodeIndex AndersNodeFactory::getVarargNodeFor(const llvm::Function* f) {
+NodeFactory.cpp:unsigned AndersNodeFactory::constGEPtoFieldNum(const llvm::ConstantExpr* expr) const {
+NodeFactory.cpp:void AndersNodeFactory::dumpNode(NodeIndex idx) const {
+NodeFactory.cpp:void AndersNodeFactory::dumpNode(NodeIndex idx,
+NodeFactory.cpp:void AndersNodeFactory::dumpNodePtrSetInfo(
+NodeFactory.cpp:void AndersNodeFactory::dumpNodeInfo(
+NodeFactory.cpp:NodeIndex AndersNodeFactory::getMergeTarget(NodeIndex n) {
+NodeFactory.cpp:NodeIndex AndersNodeFactory::getMergeTarget(NodeIndex n) const {
+NodeFactory.cpp:NodeIndex AndersNodeFactory::createVarargNode(const llvm::Function* f) {
+NodeFactory.cpp:NodeIndex AndersNodeFactory::createReturnNode(const llvm::Function* f) {
+AAMap.cpp:                    assert (valNode != AndersNodeFactory::InvalidIndex && "Failed to find alloca value node");
+AAMap.cpp:                assert(srcIndex != AndersNodeFactory::InvalidIndex && "Failed to find gep src node");
+AAMap.cpp:                assert(dstIndex != AndersNodeFactory::InvalidIndex && "Failed to find gep dst node");
+AAMap.cpp:                assert(srcIndex != AndersNodeFactory::InvalidIndex && "Failed to find bitcast src node");
+AAMap.cpp:                assert(dstIndex != AndersNodeFactory::InvalidIndex && "Failed to find bitcast dst node");
+AAMap.cpp:                assert(opIndex != AndersNodeFactory::InvalidIndex && "Failed to find load operand node");
+AAMap.cpp:                assert(valIndex != AndersNodeFactory::InvalidIndex && "Failed to find load value node");
+AAMap.cpp:                assert(dstIndex != AndersNodeFactory::InvalidIndex && "Failed to find phi dst node");
+AAMap.cpp:                    assert(phiIndex != AndersNodeFactory::InvalidIndex && "Failed to find phi src node");
+AAMap.cpp:                assert(dstIndex != AndersNodeFactory::InvalidIndex && "Failed to find inttoptr dst node");
+AAMap.cpp:                    assert(srcIndex != AndersNodeFactory::InvalidIndex && "Failed to find inttoptr src node");
+AAMap.cpp:                    assert(srcIndex != AndersNodeFactory::InvalidIndex && "Failed to find inttoptr src node");
+AAMap.cpp:                assert(dstIndex != AndersNodeFactory::InvalidIndex && "Failed to find select dst node");
+AAMap.cpp:                assert(srcIndex1 != AndersNodeFactory::InvalidIndex && "Failed to find select src node 1");
+AAMap.cpp:                assert(srcIndex2 != AndersNodeFactory::InvalidIndex && "Failed to find select src node 2");
+QualiInference.cpp:		        NodeIndex idx = AndersNodeFactory::InvalidIndex;
+QualiInference.cpp:			    if (valIdx == AndersNodeFactory::InvalidIndex)
+QualiInference.cpp:		    	if (idx != AndersNodeFactory::InvalidIndex) {
+QualiInference.cpp:                   			     if (idx != AndersNodeFactory::InvalidIndex) {
+QualiInference.cpp:                                    if (idx != AndersNodeFactory::InvalidIndex) {
+QualiInference.cpp:            NodeIndex objIndex = AndersNodeFactory::InvalidIndex;
+QualiInference.cpp:            assert (valIndex != AndersNodeFactory::InvalidIndex && "Failed to find alloca value node");
+QualiInference.cpp:                assert (objIndex != AndersNodeFactory::InvalidIndex && "Failed to find alloca obj node");
+QualiInference.cpp:            assert (objIndex != AndersNodeFactory::InvalidIndex && "Failed to find alloca obj node");
+QualiInference.cpp:            assert(srcNode != AndersNodeFactory::InvalidIndex && "Failed to find load operand node");
+QualiInference.cpp:            assert(dstNode != AndersNodeFactory::InvalidIndex && "Failed to find load value node");
+QualiInference.cpp:            if (srcNode == AndersNodeFactory::InvalidIndex) {
+QualiInference.cpp:            //assert(srcIndex != AndersNodeFactory::InvalidIndex && "Failed to find store src node");
+QualiInference.cpp:            assert(dstNode != AndersNodeFactory::InvalidIndex && "Failed to find store dst node");
+QualiInference.cpp:            assert(srcIndex != AndersNodeFactory::InvalidIndex && "Failed to find gep src node");
+QualiInference.cpp:            assert(dstIndex != AndersNodeFactory::InvalidIndex && "Failed to find gep dst node");
+QualiInference.cpp:            assert(dstIndex != AndersNodeFactory::InvalidIndex && "Failed to find phi dst node");
+QualiInference.cpp:            assert(initIndex != AndersNodeFactory::InvalidIndex && "Failed to find phi init node");
+QualiInference.cpp:                assert(srcIndex != AndersNodeFactory::InvalidIndex && "Failed to find phi src node");
+QualiInference.cpp:            assert(srcIndex != AndersNodeFactory::InvalidIndex && "Failed to find bitcast src node");
+QualiInference.cpp:            assert(dstIndex != AndersNodeFactory::InvalidIndex && "Failed to find bitcast dst node");
+QualiInference.cpp:            assert(dstIndex != AndersNodeFactory::InvalidIndex && "Failed to find inttoptr dst node");
+QualiInference.cpp:            assert(srcIndex != AndersNodeFactory::InvalidIndex && "Failed to find inttoptr src node");
+QualiInference.cpp:            assert(dstIndex != AndersNodeFactory::InvalidIndex && "Failed to find ptrtoint dst node");
+QualiInference.cpp:            if (srcIndex != AndersNodeFactory::InvalidIndex)
+QualiInference.cpp:            assert(srcIndex1 != AndersNodeFactory::InvalidIndex && "Failed to find select src node 1");
+QualiInference.cpp:            assert(srcIndex2 != AndersNodeFactory::InvalidIndex && "Failed to find select src node 2");
+QualiInference.cpp:            assert(conditionIndex != AndersNodeFactory::InvalidIndex && "Failed to find select condition node");
+QualiInference.cpp:            assert(dstIndex != AndersNodeFactory::InvalidIndex && "Failed to find select dst node");
+QualiInference.cpp:                assert(dstIndex != AndersNodeFactory::InvalidIndex && "Failed to find va_arg dst node");
+QualiInference.cpp:                assert(vaIndex != AndersNodeFactory::InvalidIndex && "Failed to find vararg node");
+QualiInference.cpp:            assert(dstNode != AndersNodeFactory::InvalidIndex && "Failed to find call dst node");
+QualiInference.cpp:        if (sumArgObjIndex == AndersNodeFactory::InvalidIndex)
+QualiInference.cpp:        if (sumArgObjIndex == AndersNodeFactory::InvalidIndex)
+QualiInference.cpp:			    if (idx == AndersNodeFactory::InvalidIndex) {
+QualiInference.cpp:			    if (idx != AndersNodeFactory::InvalidIndex) {
+QualiInference.cpp:        if (objNode != AndersNodeFactory::InvalidIndex)
+QualiInference.cpp:                assert(baseNode != AndersNodeFactory::InvalidIndex && "missing base val node for gep");
+ConstraintCollect.cpp:    assert(valNode != AndersNodeFactory::InvalidIndex);
+ConstraintCollect.cpp:    if (obj == AndersNodeFactory::InvalidIndex) {

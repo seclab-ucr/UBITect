@@ -1,0 +1,36 @@
+Release/
+Release+Asserts/
+Debug/
+Debug+Asserts/
+Output/
+
+# commonly used as cmake build directory
+/build
+/cmake-build-debug
+
+
+cscope.*
+*~
+
+*.log
+*.sum
+*.out
+*.status
+
+# In source build files
+docs/doxygen.cfg
+include/klee/Config/CompileTimeInfo.h
+*.config
+
+config.h
+site.exp
+
+# Site file for llvm-lit
+lit.site.cfg
+
+# Autoconf files
+autoconf/aclocal.m4
+autoconf/autom4te.cache/
+autom4te.cache/
+
+/.idea/
