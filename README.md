@@ -27,7 +27,7 @@ bitcode name, function name and basic block number for human understandability.
     $cd llvm
     $./build-llvm.sh
     #build the qualifer inference
-    $cd ../../
+    $cd ..
     $make
     #install the dependencies used by KLEE and z3
     $sudo apt-get install build-essential curl libcap-dev git cmake libncurses5-dev python-minimal python-pip unzip libtcmalloc-minimal4 libgoogle-perftools-devz lib1g-dev
