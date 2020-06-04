@@ -108,13 +108,13 @@ $opt -load ../llvm/build/lib/bbTaglib.so -bbtag backlog.llbc >>backlog.bc
 #Apply UBITect on tagged bitcode file:
 $./../build/ubitect -ubi-analysis absolute/path/to/backlog.bc
 ```
-Two warning is showed in the terminal, indicating the potential uninitialized use
+Two warnings are showed in the terminal, indicating the potential uninitialized use
 ```sh
  [[Code] backlog.c: +25]
  [[Code] backlog.c: +26]
 
 ```
-The warnings with guidance are put inside warnigs.json under current directory which aids the under-constraint symbolic execution to verify the result.
+The warnings with guidance are put inside warnings.json under current directory which aids the under-constraint symbolic execution to verify the result.
 ```json
 absolute/path/to/UBITect/example/backlog.bc:
 {
@@ -130,7 +130,7 @@ Main fields guiding the klee to explore the feasible path:
 -whitelist: LLVM basic blocks that the feasible path must include, in this example, we have "backlog.llbc-test-0", because it's the definition of the backlog, therefore, this basic block must in the path.
 -use: The basic block where the uninitialzied use happens, also the end block when klee explore the path, this warning is reported in "if(backlog)", which happens in "backlog.llbc-test-2"
 ```
-LLVM control flow graoh looks like:
+LLVM control flow graph looks like:
 ```llvm
 +----------------------------------------------------------------------------------+
 |backlog.llbc-test-0:                                                              |
