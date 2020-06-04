@@ -208,7 +208,7 @@ feasible path.
 - path shows the feasible path found by klee: in the first branch, the path goes to the false branch
 - input_0: when input is 0 (#x0000000000000000), this path is feasible
 ```
-##Prepare LLVM bitcode files of OS kernels
-The code should be compiled with the built LLVM
-We use the github repo and the wrapper to compile the kernel code
-Please follow the compilation instructions in https://github.com/YizhuoZhai/lll-414.git to get the bitcode files
+## Prepare LLVM bitcode files of OS kernels
+* The code should be compiled with the built LLVM
+* We use the github repo and the wrapper to compile the kernel code
+* Please follow the compilation instructions in https://github.com/YizhuoZhai/lll-414.git to get the bitcode files
