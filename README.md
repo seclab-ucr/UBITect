@@ -35,14 +35,15 @@ bitcode name, function name and basic block number.
     $cd KLEE
     $./build-klee.sh
 ```
+Now the qualifeir inference is under path/to/UBITect/build/bin/ubitect and klee is under path/to/UBITect/KLEE/klee/build/bin/klee
 
-
-## How to use UBITect:
-Build the bitcode file with -O0 optimization and -g option, then tag it:
+## How to use UBITect
+* Compile the code with options: -O0, -g, -fno-short-wchar
+* Rename the basic block by dir/to/llvm/build/lib/bbTaglib.so
 ```sh
     $opt -load dir/to/llvm/build/lib/bbTaglib.so -bbtag bitcode-before-tag >>bitcode-after-tag
 ```
-Use UBITect to generate the potential warnings:
+Use path/to/UBITect/build/ubitect to generate the potential warnings:
 ```sh
     # To analyze a single bitcode file, say "test.bc", run:
     $./build/ubitect -ubi-analysis test.bc 
@@ -52,14 +53,14 @@ Use UBITect to generate the potential warnings:
 The initial warnings are showed in terminal in format [[code] cfile: line in tested code (.c file)], we assume the test.c is compiled to test.bc
 Also, the warnings with guidance is put in ```warnings.json```
 
-Now the ready-to use klee is path/to/UBITectKLEE/build/bin/klee, add klee_path="Dir/To/klee" to path_verify.py.
+Use path/to/UBITectKLEE/build/bin/klee to explore feasible paths, add klee_path="Dir/To/klee" to path_verify.py.
 ```    
     #run klee via the wrapper, the default time limit is 120s and memory limit is 2GB if
     $./path_verify.py warnings.json 
     #if you want to define the time limit(s) and memory limit(GB), e.g., 10s and 1 GB, run
     $./path_verify.py warnings.json 10 1
 ```
-Now the verified results are showed in the confirm_result.json in the current directory
+Now the results with feasible paths are put in the confirm_result.json in the current directory
 # Example
 An example is put under subdirectory example/
 ```sh
