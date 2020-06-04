@@ -19,19 +19,21 @@ yzhai003@ucr.edu
 [^tag]: The tag pass is used to give every basic block in the folder an identifier. By default, llvm names the basic block as 1%, 2%, etc. This pass rename the basic blocks with
 bitcode name, function name and basic block number.
 
-##Installation Instructions:
+## Installation Instructions:
 ```sh
     #change to the code folder
     $cd UBITect
-    #build LLVM used
+    #build LLVM
     $cd llvm
     $./build-llvm.sh
-    #build the UBITect
+    #build the qualifer inference
     $cd ../../
     $make
-
-    
-
+    #install the dependencies used by KLEE and z3
+    $sudo apt-get install build-essential curl libcap-dev git cmake libncurses5-dev python-minimal python-pip unzip libtcmalloc-minimal4 libgoogle-perftools-devz lib1g-dev
+    #build the KLEE
+    $cd KLEE
+    $./build-klee.sh
 ```
 
 
@@ -50,26 +52,8 @@ Use UBITect to generate the potential warnings:
 The initial warnings are showed in terminal in format [[code] cfile: line in tested code (.c file)], we assume the test.c is compiled to test.bc
 Also, the warnings with guidance is put in ```warnings.json```
 
-Use under-constrained symbolic execution to verify the result:
-```sh
-    #Install dependencies:
-    $sudo apt-get install build-essential curl libcap-dev git cmake libncurses5-dev python-minimal python-pip unzip libtcmalloc-minimal4 libgoogle-perftools-devz lib1g-dev
-    #Install constraint solver under UBITect/:
-    $cd KLEE
-    $./build-klee.sh
-```
-
-Now the ready-to use klee is cur/path/2018_klee_confirm_path/build/bin/klee
-Add the absolute path of klee to path_verify.py
-```sh
-    $vi path_verify.py
-```
-```python
-    klee_path="Dir/To/klee"
-
-```
-```
-    $wq
+Now the ready-to use klee is path/to/UBITectKLEE/build/bin/klee, add klee_path="Dir/To/klee" to path_verify.py.
+```    
     #run klee via the wrapper, the default time limit is 120s and memory limit is 2GB if
     $./path_verify.py warnings.json 
     #if you want to define the time limit(s) and memory limit(GB), e.g., 10s and 1 GB, run
