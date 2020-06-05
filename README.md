@@ -6,7 +6,7 @@ UBITect is a UBI bug finding tool which combines flow-sensitive type qualifier a
 Yizhuo Zhai
 Department of Computer Science and Engineering
 University of California, Riverside
-yzhai003@ucr.edu
+yzhai003 at ucr dot edu
 ```
 ## Files
 |  
@@ -17,7 +17,7 @@ yzhai003@ucr.edu
 |-Makefile: Used to compile qualifier inference code in src/  \
 |-path_verify.py: Wrapper to run KLEE \
 |-getbclist.py: A wrapper to rename the basic block and collect the LLVM bitcode files for OS kernels \
-\* The rename pass is a llvm pass which  gives every basic block in the folder an identifier. By default, llvm names the basic block as 1%, 2%, etc, which is hard for human to track.  This pass rename the basic blocks with bitcode name, function name and basic block number for human understandability, the loadable library is called ```bbTaglib.so```.
+\* The rename pass is a llvm pass which gives every basic block in the folder an identifier. By default, llvm names the basic block as 1%, 2%, etc, which is hard for human to track.  This pass rename the basic blocks with bitcode name, function name and basic block number for human understandability, the loadable library is called ```bbTaglib.so```, we already use wrappers to integrate the rename process, the users do not need to care about it now.
 
 ## Installation Instructions:
 ```sh
@@ -50,7 +50,7 @@ Use path/to/UBITect/build/ubitect to generate the potential warnings:
     # To analyze a list of bitcode files, put the absolute paths of the bitcode files in a file, say "bitcode.list", then run:
     $./build/ubitect -ubi-analysis @bitcode.list
 ```
-The initial warnings are showed in terminal in format [[code] cfile: line in tested code (.c file)], we assume the test.c is compiled to test.bc
+The initial warnings are shown in terminal in format [[code] cfile: line in tested code (.c file)], we assume the test.c is compiled to test.bc
 Also, the warnings with guidance is put in ```warnings.json```
 
 Use path/to/UBITectKLEE/build/bin/klee to explore feasible paths, add klee_path="Dir/To/klee" to path_verify.py.
@@ -62,7 +62,7 @@ Use path/to/UBITectKLEE/build/bin/klee to explore feasible paths, add klee_path=
 ```
 Now the results with feasible paths are put in the confirm_result.json in the current directory
 ## Step by Step Tutorial
-This section uses a simple piece of code to show the workflow of UBITect and explains the output of intermediate result for readers who are intersted in. For readers who care more about how to manually verify the result with the aid of symbolic execution, feel free to run the command, skip the explanation and then jump to the step 4.
+This section uses a simple piece of code to show the workflow of UBITect and explains the intermediate output for readers who are intersted. For readers who care more about how to manually verify the result with the aid of symbolic execution, feel free to run the command, skip the explanation and then read the step 4.
 ### Step 1: Undersand the example code:
 backlog.c is a piece of vulnerable code simplified from [linux commit 1a92b2b](https://github.com/torvalds/linux/commit/1a92b2ba339221a4afee43adf125fcc9a41353f7),
 the variable **backlog** could be uninitialized if **a** is zero. Then this pointer is used in line 25 (if statement) and line 26 (dereferenced). The following
