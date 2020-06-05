@@ -38,7 +38,7 @@ yzhai003@ucr.edu
 Now the qualifeir inference is under path/to/UBITect/build/bin/ubitect and klee is under path/to/UBITect/KLEE/klee/build/bin/klee
 
 ## How to use UBITect
-* Compile the code with options: -O0, -g, -fno-short-wchar
+* Compile the target code with options: -O0, -g, -fno-short-wchar
 * Rename the basic block and generate bitcode.list by the wrapper getbclist.py
 ```sh
     $python getbclist.py abs/dir/to/llvm
