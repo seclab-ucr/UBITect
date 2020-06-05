@@ -62,7 +62,7 @@ Use path/to/UBITectKLEE/build/bin/klee to explore feasible paths, add klee_path=
 ```
 Now the results with feasible paths are put in the confirm_result.json in the current directory
 ## Step by Step Tutorial
-This section uses a simple piece of code to show the workflow of UBITect and explains the output of intermediate result for readers who are intersted in. For readers who care more about how to manually verify the result with the aid of symbolic execution, feel free to jump into the step 4.
+This section uses a simple piece of code to show the workflow of UBITect and explains the output of intermediate result for readers who are intersted in. For readers who care more about how to manually verify the result with the aid of symbolic execution, feel free to run the command, skip the explanation and then jump to the step 4.
 ### Step 1: Undersand the example code:
 backlog.c is a piece of vulnerable code simplified from [linux commit 1a92b2b](https://github.com/torvalds/linux/commit/1a92b2ba339221a4afee43adf125fcc9a41353f7),
 the variable **backlog** could be uninitialized if **a** is zero. Then this pointer is used in line 25 (if statement) and line 26 (dereferenced). The following
@@ -99,9 +99,10 @@ int test(int a){
         return 0;
 }
 ```
-### Step2: Qualifier inference generate the potential uninitilaized use:
+### Step 2: Qualifier inference generate the potential uninitilaized use:
 ```sh
 $cd example/
+$../llvm/build/bin/clang -emit-llvm -O0 -g -fno-short-wchar -c backlog.c -o backlog.llbc
 $python ../getbclist.py abs/dir/to/UBITect/llvm
 $../build/ubitect -ubi-analysis @bitcode.list
 ```
@@ -173,9 +174,9 @@ LLVM control flow graph looks like:
 
 
 ```
-### Step3: Use klee to find the feasible path
+### Step 3: Use klee to find the feasible path
+change the home_path inside ../path_verify.py to path/to/UBITect and then
 ```sh
-#change the klee_path inside ../path_verify.py to path/to/klee/bin/klee and then
 $python ../path_verify.py warnings.json
 ```
 After the path exploration, klee verifies that those are true positives as:
