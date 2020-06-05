@@ -61,11 +61,10 @@ Use path/to/UBITectKLEE/build/bin/klee to explore feasible paths, add klee_path=
     $./path_verify.py warnings.json 10 1
 ```
 Now the results with feasible paths are put in the confirm_result.json in the current directory
-# Example
-An example is put under subdirectory example/
-```sh
-$cd example/
-```
+# Step by Step Tutorial
+For readers who what to inspect  how UBITect works, we use an example under subdirectory example/ to show case the intermediate steps.
+ For readers who care more about the final results, please jump into the step 5.
+## Step 1: Undersand the example code:
 backlog.c is a piece of vulnerable code simplified from [linux commit 1a92b2b](https://github.com/torvalds/linux/commit/1a92b2ba339221a4afee43adf125fcc9a41353f7),
 the variable **backlog** could be uninitialized if **a** is zero. Then this pointer is used in line 25 (if statement) and line 26 (dereferenced). The following
 steps show how UBITect detects them.
@@ -101,13 +100,10 @@ int test(int a){
         return 0;
 }
 ```
+## Step2: Qualifier inference generate the potential uninitilaized use:
 ```sh
-#Compile it to bitcode file and tag the basic block:
-$clang -emit-llvm -O0 -g -fno-short-wchar -c backlog.c -o backlog.llbc
-#tag the basic block:
-$opt -load ../llvm/build/lib/bbTaglib.so -bbtag backlog.llbc >>backlog.bc
-#Apply UBITect on tagged bitcode file:
-$./../build/ubitect -ubi-analysis absolute/path/to/backlog.bc
+$cd example/
+$./test.sh
 ```
 Two warnings are showed in the terminal, indicating the potential uninitialized use
 ```sh
@@ -115,20 +111,18 @@ Two warnings are showed in the terminal, indicating the potential uninitialized 
  [[Code] backlog.c: +26]
 
 ```
-The warnings with guidance are put inside warnings.json under current directory which aids the under-constraint symbolic execution to verify the result.
+The warnings with guidance are put inside warnings.json under current directory which aids the under-constraint symbolic execution to explore the feasible path.
 ```json
 absolute/path/to/UBITect/example/backlog.bc:
 {
 "blacklist": ["backlog.llbc-test-1", "backlog.llbc-test-3", "backlog.llbc-test-4"], 
 "use": "backlog.llbc-test-2", "warning": "  %3 = load %struct.test_struct*, %struct.test_struct** %backlog, align 8, !dbg !46", 
-"whitelist": ["backlog.llbc-test-0"]}
 ......
 }
 ```
 Main fields guiding the klee to explore the feasible path:
 ```
 -blacklist: LLVM basic blocks that klee should avoid when explore the feasible path, in this example, blacklist contains "backlog.llbc-test-1", from the control flow graph showed below, this basic block will initialize backlog, to trigger the bug, this basic block should not in our path. "backlog.llbc-test-3" and "backlog.llbc-test-4" is in the blacklist because they cannot reach the use, therefore, we can make klee stop earlier.
--whitelist: LLVM basic blocks that the feasible path must include, in this example, we have "backlog.llbc-test-0", because it's the definition of the backlog, therefore, this basic block must in the path.
 -use: The basic block where the uninitialzied use happens, also the end block when klee explore the path, this warning is reported in "if(backlog)", which happens in "backlog.llbc-test-2"
 ```
 LLVM control flow graph looks like:
@@ -179,11 +173,10 @@ LLVM control flow graph looks like:
 
 
 ```
-
+Step3: Use klee to find the feasible path
 ```sh
-#change the klee_path inside ../path_verify.py and then
-$cp ../path_verify.py .
-$python path_verify.py warnings.json
+#change the klee_path inside ../path_verify.py to path/to/klee/bin/klee and then
+$python ../path_verify.py warnings.json
 ```
 After the path exploration, klee verifies that those are true positives as:
 ```
@@ -192,6 +185,8 @@ After the path exploration, klee verifies that those are true positives as:
 ```
 Meaning the uninitalized use appears in line 25 and line 26, the details are inside confirm_result.json, it adds the related information of the 
 feasible path. 
+Step4: Path and input for human to verify the result
+The warnings along with the feasible path is in confirm_result.json, the field "path" and "input_0" helps for the human verification.
 ```json
 {
 "path":["false :   br i1 %tobool, label %backlog.llbc-test-1, label %backlog.llbc-test-2, !dbg !37"],
@@ -199,7 +194,7 @@ feasible path.
 ......
 }
 
-- path shows the feasible path found by klee: in the first branch, the path goes to the false branch
+- path: feasible path found by klee: in the first branch, the path goes to the false branch
 - input_0: when input is 0 (#x0000000000000000), this path is feasible
 ```
 ## Prepare LLVM bitcode files of OS kernels

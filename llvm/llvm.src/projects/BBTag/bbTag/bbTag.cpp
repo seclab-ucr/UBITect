@@ -24,7 +24,7 @@ std::string replaceChar(std::string str, char ch1, char ch2);
                 {   
                     std::string mName = M.getName().str();
 		    mName = replaceChar(mName,'/', '-');
-		    BB->setName(mName.substr(1)+ "-" + F->getName().str() + "-"  + utostr(block_num++));
+		    BB->setName(mName + "-" + F->getName().str() + "-"  + utostr(block_num++));
 		}
 
             }
