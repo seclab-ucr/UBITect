@@ -35,9 +35,10 @@ yzhai003 at ucr dot edu
     $cd KLEE
     $./build-klee.sh
 ```
-Now the qualifeir inference is under path/to/UBITect/build/bin/ubitect and klee is under path/to/UBITect/KLEE/klee/build/bin/klee
+Now the ready to use binary are path/to/UBITect/build/bin/ubitect and path/to/UBITect/KLEE/klee/build/bin/klee
 
 ## How to use UBITect
+This section shows the essential steps to apply UBITect to the target code, we will have a detailed step by step tutorial with a concrete example in the next section.
 * Compile the target code with options: -O0, -g, -fno-short-wchar
 * Rename the basic block and generate bitcode.list by the wrapper getbclist.py
 ```sh
@@ -51,16 +52,16 @@ Use path/to/UBITect/build/ubitect to generate the potential warnings:
     $./build/ubitect -ubi-analysis @bitcode.list
 ```
 The initial warnings are shown in terminal in format [[code] cfile: line in tested code (.c file)], we assume the test.c is compiled to test.bc
-Also, the warnings with guidance is put in ```warnings.json```
+Also, the initial warnings with guidance for symbolic execution is put in ```warnings.json```
 
-Use path/to/UBITectKLEE/build/bin/klee to explore feasible paths, add klee_path="Dir/To/klee" to path_verify.py.
+Use path/to/UBITectKLEE/build/bin/klee to explore feasible paths, add home_path="Dir/To/UBITect" to path_verify.py.
 ```    
     #run klee via the wrapper, the default time limit is 120s and memory limit is 2GB if
     $python ./path_verify.py warnings.json 
     #if you want to define the time limit(s) and memory limit(GB), e.g., 10s and 1 GB, run
     $python ./path_verify.py warnings.json 10 1
 ```
-Now the results with feasible paths are put in the confirm_result.json in the current directory
+Now the results with feasible paths are put in the confirm_result.json in the current directory.
 ## Step by Step Tutorial
 This section uses a simple piece of code to show the workflow of UBITect and explains the intermediate output for readers who are intersted. For readers who care more about how to manually verify the result with the aid of symbolic execution, feel free to run the command, skip the explanation and then read the step 4.
 ### Step 1: Undersand the example code:
