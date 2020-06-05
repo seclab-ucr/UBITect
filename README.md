@@ -35,7 +35,7 @@ yzhai003 at ucr dot edu
     $cd KLEE
     $./build-klee.sh
 ```
-Now the ready to use binary are path/to/UBITect/build/bin/ubitect and path/to/UBITect/KLEE/klee/build/bin/klee
+Now the ready to use binaries are path/to/UBITect/build/bin/ubitect and path/to/UBITect/KLEE/klee/build/bin/klee
 
 ## How to use UBITect
 This section shows the essential steps to apply UBITect to the target code, we will have a detailed step by step tutorial with a concrete example in the next section.
@@ -107,7 +107,7 @@ $../llvm/build/bin/clang -emit-llvm -O0 -g -fno-short-wchar -c backlog.c -o back
 $python ../getbclist.py abs/dir/to/UBITect/llvm
 $../build/ubitect -ubi-analysis @bitcode.list
 ```
-Two warnings are showed in the terminal, indicating the potential uninitialized use
+Two warnings appear in the terminal, indicating the potential uninitialized use
 ```sh
  [[Code] backlog.c: +25]
  [[Code] backlog.c: +26]
@@ -127,7 +127,7 @@ Main fields guiding the klee to explore the feasible path:
 -blacklist: LLVM basic blocks that klee should avoid when explore the feasible path, in this example, blacklist contains "backlog.llbc-test-1", from the control flow graph showed below, this basic block will initialize backlog, to trigger the bug, this basic block should not in our path. "backlog.llbc-test-3" and "backlog.llbc-test-4" is in the blacklist because they cannot reach the use, therefore, we can make klee stop earlier.
 -use: The basic block where the uninitialzied use happens, also the end block when klee explore the path, this warning is reported in "if(backlog)", which happens in "backlog.llbc-test-2"
 ```
-LLVM control flow graph looks like:
+For easy reference, we put the LLVM control flow graph here:
 ```llvm
 +----------------------------------------------------------------------------------+
 |backlog.llbc-test-0:                                                              |
@@ -180,14 +180,13 @@ change the home_path inside ../path_verify.py to path/to/UBITect and then
 ```sh
 $python ../path_verify.py warnings.json
 ```
-After the path exploration, klee verifies that those are true positives as:
+After the path exploration, klee verifies that those two are true positives as:
 ```
 [SrcCode] backlog.c +25
 [SrcCode] backlog.c +26
 ```
-Meaning the uninitalized use appears in line 25 and line 26, the details are inside confirm_result.json, it adds the related information of the 
-feasible path. 
-### Step4: Path and input for human to verify the result
+Meaning the uninitalized use appears in line 25 and line 26, the details are inside confirm_result.json, KLEE adds the related information of the feasible path. 
+### Step4: Information for human to verify the result
 The warnings along with the feasible path is in confirm_result.json, the field "path" and "input_0" helps for the human verification.
 ```json
 {
