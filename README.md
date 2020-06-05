@@ -12,13 +12,12 @@ yzhai003@ucr.edu
 |  
 |-src: Qualifier Inference code for UBITect  \
 |-KLEE: Under constraint symbolic execution code and z3 as the contraint solver  \
-|-llvm: The source code for llvm, clang and the tag pass, we use llvm-7.0.0 and clang 7.0.0  \
+|-llvm: The source code for llvm, clang and the basic block rename pass\*, we use llvm-7.0.0 and clang 7.0.0  \
 |-example: An example showcase how UBITect works in below  \
 |-Makefile: Used to compile qualifier inference code in src/  \
 |-path_verify.py: Wrapper to run KLEE \
 |-getbclist.py: A wrapper to rename the basic block and collect the LLVM bitcode files for OS kernels \
-\* The tag pass is a llvm pass which  give every basic block in the folder an identifier. By default, llvm names the basic block as 1%, 2%, etc. This pass rename the basic blocks with
-bitcode name, function name and basic block number for human understandability.
+\* The rename pass is a llvm pass which  gives every basic block in the folder an identifier. By default, llvm names the basic block as 1%, 2%, etc, which is hard for human to track.  This pass rename the basic blocks with bitcode name, function name and basic block number for human understandability, the loadable library is called ```bbTaglib.so```.
 
 ## Installation Instructions:
 ```sh
@@ -40,16 +39,16 @@ Now the qualifeir inference is under path/to/UBITect/build/bin/ubitect and klee 
 
 ## How to use UBITect
 * Compile the code with options: -O0, -g, -fno-short-wchar
-* Rename the basic block by the wrapper getbclist.py
+* Rename the basic block and generate bitcode.list by the wrapper getbclist.py
 ```sh
-    $python getbclist.py dir/to/llvm
+    $python getbclist.py abs/dir/to/llvm
 ```
 Use path/to/UBITect/build/ubitect to generate the potential warnings:
 ```sh
     # To analyze a single bitcode file, say "test.bc", run:
     $./build/ubitect -ubi-analysis abs/path/to/test.bc 
-    # To analyze a list of bitcode files, put the absolute paths of the bitcode files in a file, say "bc.list", then run:
-    $./build/ubitect -ubi-analysis @bc.list
+    # To analyze a list of bitcode files, put the absolute paths of the bitcode files in a file, say "bitcode.list", then run:
+    $./build/ubitect -ubi-analysis @bitcode.list
 ```
 The initial warnings are showed in terminal in format [[code] cfile: line in tested code (.c file)], we assume the test.c is compiled to test.bc
 Also, the warnings with guidance is put in ```warnings.json```
@@ -57,9 +56,9 @@ Also, the warnings with guidance is put in ```warnings.json```
 Use path/to/UBITectKLEE/build/bin/klee to explore feasible paths, add klee_path="Dir/To/klee" to path_verify.py.
 ```    
     #run klee via the wrapper, the default time limit is 120s and memory limit is 2GB if
-    $./path_verify.py warnings.json 
+    $python ./path_verify.py warnings.json 
     #if you want to define the time limit(s) and memory limit(GB), e.g., 10s and 1 GB, run
-    $./path_verify.py warnings.json 10 1
+    $python ./path_verify.py warnings.json 10 1
 ```
 Now the results with feasible paths are put in the confirm_result.json in the current directory
 ## Step by Step Tutorial
@@ -104,7 +103,8 @@ int test(int a){
 ### Step2: Qualifier inference generate the potential uninitilaized use:
 ```sh
 $cd example/
-$./test.sh
+$python ../getbclist.py abs/dir/to/UBITect/llvm
+$../build/ubitect -ubi-analysis @bitcode.list
 ```
 Two warnings are showed in the terminal, indicating the potential uninitialized use
 ```sh
