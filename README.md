@@ -12,11 +12,12 @@ yzhai003@ucr.edu
 |  
 |-src: Qualifier Inference code for UBITect  \
 |-KLEE: Under constraint symbolic execution code and z3 as the contraint solver  \
-|-llvm: The source code for llvm, clang and the tag pass\*  \
+|-llvm: The source code for llvm, clang and the tag pass, we use llvm-7.0.0 and clang 7.0.0  \
 |-example: An example showcase how UBITect works in below  \
 |-Makefile: Used to compile qualifier inference code in src/  \
 |-path_verify.py: Wrapper to run KLEE \
-\* The tag pass is used to give every basic block in the folder an identifier. By default, llvm names the basic block as 1%, 2%, etc. This pass rename the basic blocks with
+|-getbclist.py: A wrapper to rename the basic block and collect the LLVM bitcode files for OS kernels 
+\* The tag pass is a llvm pass which  give every basic block in the folder an identifier. By default, llvm names the basic block as 1%, 2%, etc. This pass rename the basic blocks with
 bitcode name, function name and basic block number for human understandability.
 
 ## Installation Instructions:
@@ -201,3 +202,4 @@ The warnings along with the feasible path is in confirm_result.json, the field "
 * The code should be compiled with the built LLVM
 * We use the github repo and the wrapper to compile the kernel code
 * Please follow the compilation instructions in https://github.com/YizhuoZhai/lll-414.git to get the bitcode files
+* After compilation, run the getbclist.py to get bitcode.list
