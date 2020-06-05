@@ -17,7 +17,8 @@ import signal
 # klee_log_file_name: all log of klee. I do not mv those log into one file.
 
 # those variables need you change
-klee_path = "/data/home/yizhuo/klee/yzklee/build/bin/klee"
+home_path = Dir/To/UBITect
+klee_path = home_path+"/KLEE/klee/build/bin/klee"
 
 total_cpu = multiprocessing.cpu_count()
 klee_log_file_name = "confirm_result.log"
@@ -57,7 +58,7 @@ class ProcessTimer:
         self.link_file = self.link_file.replace(linux_kernel_path_in_json, linux_kernel_path_in_this_pc)
         bc_list = self.link_file.replace(":\n", "")
         bc_list = bc_list.split(":")
-        link_cmd = "llvm-link -o " + "./built-in.bc"
+        link_cmd = home_path+"/llvm/build/bin/llvm-link -o " + "./built-in.bc"
         for bc in bc_list:
             link_cmd = link_cmd + " " + bc
         self.link_cmd = link_cmd
@@ -256,7 +257,7 @@ def read_all_json(file_name):
     f = open(file_name, "a")
     for i in range(total_cpu):
         path_file_name = str(i) + "/" + file_name
-        print(path_file_name)
+        #print(path_file_name)
         if os.path.isfile(path_file_name):
             tf = open(path_file_name, "r")
             f.write(tf.read())
@@ -301,4 +302,4 @@ if __name__ == "__main__":
         time_out = int(sys.argv[2])
     if len(sys.argv) > 3:
         memory_out = int(sys.argv[3])*1024*1024*1024
-	main()
+    main()
