@@ -1,7 +1,7 @@
 # UBITect: A Precise and Scalable Method to Detect Use-Before-Initialization Bugs in Linux Kernel
 Authors: Yizhuo Zhai, Yu Hao, Hang Zhang, Daimeng Wang, Chengyu Song, Zhiyun Qian, Mohsen Lesani, Srikanth V. Krishnamurthy, Paul Yu
 
-UBITect is a UBI bug finding tool which combines flow-sensitive type qualifier analysis and symbolic execution to perform precise and scalable UBI bug detection. This repo is our implementation, we conducted our experiment on ubnuntu 16.04, if there's any problem for the experiment, please contact the following author:
+UBITect is a UBI bug finding tool which combines flow-sensitive type qualifier analysis and symbolic execution to perform precise and scalable UBI bug detection. For more details, please refer to our paper. This repo is our implementation, we conducted our experiment on ubnuntu 16.04, if there's any problem for the experiment, please contact the following author:
 ```
 Yizhuo Zhai
 Department of Computer Science and Engineering
@@ -62,8 +62,7 @@ Use path/to/UBITectKLEE/build/bin/klee to explore feasible paths, add klee_path=
 ```
 Now the results with feasible paths are put in the confirm_result.json in the current directory
 ## Step by Step Tutorial
-For readers who what to inspect  how UBITect works, we use an example under subdirectory example/ to show case the intermediate steps.
- For readers who care more about the final results, please jump into the step 4.
+This section uses a simple piece of code to show the workflow of UBITect and explains the output of intermediate result for readers who are intersted in. For readers who care more about how to manually verify the result with the aid of symbolic execution, feel free to jump into the step 4.
 ### Step 1: Undersand the example code:
 backlog.c is a piece of vulnerable code simplified from [linux commit 1a92b2b](https://github.com/torvalds/linux/commit/1a92b2ba339221a4afee43adf125fcc9a41353f7),
 the variable **backlog** could be uninitialized if **a** is zero. Then this pointer is used in line 25 (if statement) and line 26 (dereferenced). The following
