@@ -61,10 +61,10 @@ Use path/to/UBITectKLEE/build/bin/klee to explore feasible paths, add klee_path=
     $./path_verify.py warnings.json 10 1
 ```
 Now the results with feasible paths are put in the confirm_result.json in the current directory
-# Step by Step Tutorial
+## Step by Step Tutorial
 For readers who what to inspect  how UBITect works, we use an example under subdirectory example/ to show case the intermediate steps.
- For readers who care more about the final results, please jump into the step 5.
-## Step 1: Undersand the example code:
+ For readers who care more about the final results, please jump into the step 4.
+### Step 1: Undersand the example code:
 backlog.c is a piece of vulnerable code simplified from [linux commit 1a92b2b](https://github.com/torvalds/linux/commit/1a92b2ba339221a4afee43adf125fcc9a41353f7),
 the variable **backlog** could be uninitialized if **a** is zero. Then this pointer is used in line 25 (if statement) and line 26 (dereferenced). The following
 steps show how UBITect detects them.
@@ -100,7 +100,7 @@ int test(int a){
         return 0;
 }
 ```
-## Step2: Qualifier inference generate the potential uninitilaized use:
+### Step2: Qualifier inference generate the potential uninitilaized use:
 ```sh
 $cd example/
 $./test.sh
@@ -173,7 +173,7 @@ LLVM control flow graph looks like:
 
 
 ```
-Step3: Use klee to find the feasible path
+### Step3: Use klee to find the feasible path
 ```sh
 #change the klee_path inside ../path_verify.py to path/to/klee/bin/klee and then
 $python ../path_verify.py warnings.json
@@ -185,7 +185,7 @@ After the path exploration, klee verifies that those are true positives as:
 ```
 Meaning the uninitalized use appears in line 25 and line 26, the details are inside confirm_result.json, it adds the related information of the 
 feasible path. 
-Step4: Path and input for human to verify the result
+### Step4: Path and input for human to verify the result
 The warnings along with the feasible path is in confirm_result.json, the field "path" and "input_0" helps for the human verification.
 ```json
 {
