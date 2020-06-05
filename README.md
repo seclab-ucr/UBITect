@@ -16,7 +16,7 @@ yzhai003@ucr.edu
 |-example: An example showcase how UBITect works in below  \
 |-Makefile: Used to compile qualifier inference code in src/  \
 |-path_verify.py: Wrapper to run KLEE \
-|-getbclist.py: A wrapper to rename the basic block and collect the LLVM bitcode files for OS kernels 
+|-getbclist.py: A wrapper to rename the basic block and collect the LLVM bitcode files for OS kernels \
 \* The tag pass is a llvm pass which  give every basic block in the folder an identifier. By default, llvm names the basic block as 1%, 2%, etc. This pass rename the basic blocks with
 bitcode name, function name and basic block number for human understandability.
 
@@ -40,9 +40,9 @@ Now the qualifeir inference is under path/to/UBITect/build/bin/ubitect and klee 
 
 ## How to use UBITect
 * Compile the code with options: -O0, -g, -fno-short-wchar
-* Rename the basic block by dir/to/llvm/build/lib/bbTaglib.so
+* Rename the basic block by the wrapper getbclist.py
 ```sh
-    $opt -load dir/to/llvm/build/lib/bbTaglib.so -bbtag bitcode-before-tag >>bitcode-after-tag
+    $python getbclist.py dir/to/llvm
 ```
 Use path/to/UBITect/build/ubitect to generate the potential warnings:
 ```sh
