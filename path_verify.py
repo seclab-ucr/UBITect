@@ -17,7 +17,7 @@ import signal
 # klee_log_file_name: all log of klee. I do not mv those log into one file.
 
 # those variables need you change
-home_path = Dir/To/UBITect
+home_path = "Dir/To/UBITect"
 klee_path = home_path+"/KLEE/klee/build/bin/klee"
 
 total_cpu = multiprocessing.cpu_count()

@@ -15,15 +15,16 @@ def renameBB(argv):
                 os.system(cmd)
 def getBC():
     file_abs = cur_dir + "/bitcode.list"
+    infile = open(file_abs, "w")
     for dirpath, dirnames, filenames in os.walk(cur_dir):
         for filename in filenames:
             if os.path.splitext(filename)[1] == ".bc":
                 module = os.path.join(dirpath, filename)
                 if "timeconst.bc" in module:
                     continue
-                with open(file_abs, "a") as f:
-                    f.write(module)
-                    f.write("\n")
+		infile.write(module)
+		infile.write("\n")
+    infile.close()
 if __name__ == "__main__":
     renameBB(sys.argv)
     getBC()
