@@ -18,19 +18,19 @@ RUN apt-get update -y && \
     cd build &&\
     rm CMakeCache.txt && \
     cmake -G "Unix Makefiles" -DLLVM_ENABLE_RTTI=ON -DCMAKE_BUILD_TYPE=Debug ../llvm.src &&\
-    make -j4 && \
+    make && \
     cd ../.. && \
     make && \
     cd KLEE/z3 && \
     python scripts/mk_make.py && \
     cd build && \
-    make -j4 && \
+    make && \
     make install && \
     cd ../../klee && \
     mkdir build && \
     cd build && \
     cmake -DENABLE_SOLVER_Z3=ON -DENABLE_UNIT_TESTS=OFF -DENABLE_SYSTEM_TESTS=OFF -DLLVM_CONFIG_BINARY=../../../llvm/build/bin/llvm-config -DLLVMCC=../../../llvm/build/bin/clang -DLLVMCXX=../../../llvm/build/bin/clang++  .. && \
-    make -j4 && \
+    make  && \
     pip install psutil
 
 COPY . .

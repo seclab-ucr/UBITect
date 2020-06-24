@@ -7,8 +7,8 @@ if [ ! -d "build" ]; then
 fi
 
 cd build
-cmake make -G "Unix Makefiles" -DLLVM_ENABLE_RTTI=ON -DCMAKE_BUILD_TYPE=Debug ../llvm.src
-make -j4
+cmake -G "Unix Makefiles" -DLLVM_ENABLE_RTTI=ON -DCMAKE_BUILD_TYPE=Debug ../llvm.src
+make
 
 if [ ! -d "$CUR_DIR/prefix" ]; then
   mkdir $CUR_DIR/prefix
