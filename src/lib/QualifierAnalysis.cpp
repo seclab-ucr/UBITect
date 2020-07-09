@@ -1288,7 +1288,28 @@ static bool isCastingCompatibleType(Type *T1, Type *T2) {
         return T1->getTypeID() == T2->getTypeID();
     }
 }
-
+void FuncAnalysis::addTerminationBB(llvm::BasicBlock* bb) {
+    int count = 0;
+    llvm::BasicBlock *cur = bb;
+    std::unordered_set<llvm::BasicBlock*> visit;
+    visit.insert(cur);
+    for (auto si = succ_begin(cur), se = succ_end(cur); si != se; ++si) count++;
+    while(count == 1) {
+        count = 0;
+        for (auto si = succ_begin(cur), se = succ_end(cur); si != se; ++si) {
+            if (visit.count(*si)) continue;
+            llvm::BasicBlock* temp  = *si;
+            visit.insert(cur);
+            count++;
+            if (temp->size() > 1) {
+                count = 0;
+                break;
+            }
+            cur = temp;
+        }
+    }
+    terminationBB.insert(cur);
+}
 void Tarjan::dfs(llvm::Function *F) {
     dfn[F] = low[F] = ts++;
     depVisit.insert(F);
