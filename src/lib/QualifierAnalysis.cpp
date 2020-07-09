@@ -276,9 +276,7 @@ bool FuncAnalysis::run() {
 #endif
     fSummary.copySummary(Ctx->FSummaries[F], fSummary, F);
     std::string FScopeName = getScopeName(F);
-    if (flag) {
-        QualifierCheck();
-    }
+    QualifierCheck();
     return false;
 }
 
