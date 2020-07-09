@@ -96,7 +96,7 @@ void FuncAnalysis::computeAASet ()
                 {
                     if (obj <= nodeFactory.getConstantIntNode())
                         continue;
-                    if (!nodeFactory.isUnionObjectNode(obj))
+                    if (!nodeFactory.isUnOrArrObjNode(obj))
                     {
                         onlyUnion = false;
                     }

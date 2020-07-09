@@ -248,7 +248,7 @@ void QualifierAnalysis::calSumForRec(std::vector<llvm::Function *> &rec) {
         }
     } //while (!scQueue.empty())
 
-    printWarnForScc(rec);
+    printWarnForRec(rec);
     for (auto item : rec) {
         Ctx->Visit[item] = true;
     }
@@ -260,8 +260,8 @@ bool QualifierAnalysis::runOnFunction(llvm::Function *f, bool flag) {
     module = M;
     DL = &(M->getDataLayout());
 
-    FuncAnalysis FA(f, Ctx);
-    FA.run(flag);
+    FuncAnalysis FA(f, Ctx, flag);
+    FA.run();
     return false;
 }
 
@@ -367,7 +367,7 @@ void FuncAnalysis::handleGEPConstant(const ConstantExpr *ce, PtsGraph &in) {
     for (auto n : in[srcNode]) {
         //assert(nodeFactory.isObjectNode(n) && "src ptr does not point to obj node");
         //if (!nodeFactory.isObjectNode(n))
-        if (n > nodeFactory.getConstantIntNode() && !nodeFactory.isUnionObjectNode(n))
+        if (n > nodeFactory.getConstantIntNode() && !nodeFactory.isUnOrArrObjNode(n))
             in[gepIndex].insert(n + fieldNum);
         else
             in[gepIndex].insert(n);
@@ -406,7 +406,7 @@ PtsGraph FuncAnalysis::processInstruction(Instruction *I, PtsGraph &in) {
                 for (auto n : in[srcNode]) {
                     //assert(nodeFactory.isObjectNode(n) && "src ptr does not point to obj node");
                     //if (!nodeFactory.isObjectNode(n))
-                    if (n > nodeFactory.getConstantIntNode() && !nodeFactory.isUnionObjectNode(n))
+                    if (n > nodeFactory.getConstantIntNode() && !nodeFactory.isUnOrArrObjNode(n))
                         in[gepIndex].insert(n + fieldNum);
                     else
                         in[gepIndex].insert(n);
@@ -548,7 +548,7 @@ PtsGraph FuncAnalysis::processInstruction(Instruction *I, PtsGraph &in) {
                         out[dstNode].insert(obj);
                         continue;
                     }
-                    if (!nodeFactory.isUnionObjectNode(obj)) {
+                    if (!nodeFactory.isUnOrArrObjNode(obj)) {
                         onlyUnion = false;
                     }
                 }
@@ -615,7 +615,7 @@ PtsGraph FuncAnalysis::processInstruction(Instruction *I, PtsGraph &in) {
                 if (obj <= nodeFactory.getConstantIntNode())
                     continue;
                 unsigned objSize = nodeFactory.getObjectSize(obj);
-                if (objSize == 1 && nodeFactory.isUnionObjectNode(obj)) {
+                if (objSize == 1 && nodeFactory.isUnOrArrObjNode(obj)) {
                     out[dstNode] = in[srcNode];
                     unionType = true;
                     break;
@@ -711,7 +711,7 @@ PtsGraph FuncAnalysis::processInstruction(Instruction *I, PtsGraph &in) {
                         unsigned newOffset = nodeFactory.getObjectOffset(obj);
                         for (unsigned i = 0; i < stSize; i++) {
                             if (stInfo->isFieldUnion(i))
-                                nodeFactory.setUnionObjNode(obj - newOffset + i);
+                                nodeFactory.setUnOrArrNode(obj - newOffset + i);
                         }
                         if (nodeFactory.isHeapNode(obj)) {
                             for (unsigned i = 0; i < stSize; i++) {
@@ -1091,7 +1091,31 @@ void FuncAnalysis::updateObjectNode(NodeIndex oldObj, NodeIndex newObj, PtsGraph
         }
     }
 }
-
+void QualifierAnalysis::printWarnForRec(std::vector<llvm::Function*>& scc) {
+#ifdef WRITEJSON
+    std::ofstream jfile;
+    if (Ctx->incAnalysis){
+        jfile.open(Ctx->jsonInc, std::ios::app);
+    }
+    else {
+        jfile.open(Ctx->jsonfile, std::ios::app);
+    }
+#endif
+    for (llvm::Function *F : scc) {
+        auto warnSet = Ctx->fToWarns[F];
+        for (auto item : warnSet) {
+#ifdef WRITEJSON
+            //print the related bc files:
+            jfile << item.first << "\n";
+            jfile << item.second << "\n";
+#endif
+        }
+    }
+#ifdef WRITEJSON
+    jfile.close();
+#endif
+    Ctx->fToWarns.clear();
+}
 int FuncAnalysis::handleContainerOf(const Instruction *I, int64_t offset, NodeIndex srcNode, PtsGraph &ptsGraph) {
     assert(I->getType()->isPointerTy() && "passing non-pointer type to handleContainerOf");
     assert(cast<PointerType>(I->getType())->getElementType()->isIntegerTy(8) &&

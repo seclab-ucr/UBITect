@@ -118,6 +118,7 @@ void LoadStaticData(GlobalContext *GCtx) {
     SetHeapAllocFuncs(GCtx->HeapAllocFuncs);
     SetInitFuncs(GCtx->InitFuncs);
     SetCopyFuncs(GCtx->CopyFuncs);
+    SetZeroMallocFuncs(GCtx->ZeroMallocFuncs);
     SetTransferFuncs(GCtx->TransferFuncs);
     SetObjSizeFuncs(GCtx->ObjSizeFuncs);
 }

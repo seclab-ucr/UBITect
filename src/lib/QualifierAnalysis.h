@@ -69,8 +69,10 @@ public:
     void PrintStatistics();
     void collectRemaining();
     //used for recursive function:
-    void calSumForRec (std::set<llvm::Function*>&);
-    void calSumForScc (std::vector<std::vector<llvm::Function*>>&);
+    //void calSumForRec (std::set<llvm::Function*>&);
+    void calSumForRec(std::vector<llvm::Function*>&);
+    void printWarnForRec(std::vector<llvm::Function*>&);
+    //void calSumForScc (std::vector<std::vector<llvm::Function*>>&);
     void calDepFuncs();
     void finalize();
     void getGlobals();

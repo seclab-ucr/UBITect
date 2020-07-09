@@ -10,9 +10,11 @@ using namespace llvm;
 void FuncAnalysis::createNodeForPointerVal(const Value *V, const Type *T, const NodeIndex valNode, PtsGraph &ptsGraph) {
     if (!T->isPointerTy())
         return;
+    //OP<<"Inside createNodeForPointerVal:"<<*V<<"\n";
     assert(valNode != AndersNodeFactory::InvalidIndex);
 
     const Type *type = cast<PointerType>(T)->getElementType();
+    //OP<<"type = "<<*type<<"\n";
     // An array is considered a single variable of its type.
     while (const ArrayType *arrayType= dyn_cast<ArrayType>(type))
         type = arrayType->getElementType();
@@ -33,27 +35,27 @@ void FuncAnalysis::createNodeForPointerVal(const Value *V, const Type *T, const 
         {
             NodeIndex obj = nodeFactory.createObjectNode(V);
             ptsGraph[valNode].insert(obj);
-            nodeFactory.setUnionObjNode(obj);
+            nodeFactory.setUnOrArrObjNode(obj);
             // XXX: conservative assumption
             if (type->isPointerTy())
             {
                 ptsGraph[obj].insert(nodeFactory.getUniversalPtrNode());
-            } 
+            }
         }
         else{
             processStruct(V, structType, valNode, ptsGraph);
         }
-            
+
     }
     else {
         NodeIndex obj = nodeFactory.createObjectNode(V);
         ptsGraph[valNode].insert(obj);
-        
+
         // XXX: conservative assumption
         if (type->isPointerTy())
         {
             ptsGraph[obj].insert(nodeFactory.getUniversalPtrNode());
-        } 
+        }
     }
 }
 
@@ -168,7 +170,7 @@ NodeIndex FuncAnalysis::processStruct(const Value* v, const StructType* stType, 
             ptsGraph[obj].insert(nodeFactory.getUniversalPtrNode());
         if (stInfo->isFieldUnion(0))
         {
-            nodeFactory.setUnionObjNode(obj);
+            nodeFactory.setUnOrArrObjNode(obj);
             ptsGraph[obj].insert(nodeFactory.getUniversalPtrNode());
         }
         for (unsigned i = 1; i < stSize; ++i) {
@@ -193,42 +195,55 @@ NodeIndex FuncAnalysis::processStruct(const Value* v, const StructType* stType, 
 }
 bool FuncAnalysis::warningReported(llvm::Instruction *I, NodeIndex idx)
 {
-	return false;
-	for (auto aa:nAAMap[I][idx])
-	{
-		if (nodeFactory.getMayNull(aa)) {
-			return true;
-		}
-		if (aa <= nodeFactory.getConstantIntNode())
-			continue;
-		if (warningSet.find(aa) != warningSet.end()) {
-			return true;
-		}
-		for (auto item:nPtsGraph[I]) {
-			//if (warningSet.find(item.first) == warningSet.end())
-			//	continue;
-			if (nodeFactory.isObjectNode(aa)) {
-			    unsigned offset = nodeFactory.getObjectOffset(aa);
-			    if (warningSet.find(aa - offset) != warningSet.end())
-                            {
-                                return true;
-                            }
-			}
-			else {
-			    if (warningSet.find(aa) != warningSet.end())
-                            {
-                                return true;
-                            }
-			}
-		}
-	}
-	for (auto aa:nAAMap[I][idx]) {
-		warningSet.insert(aa);
-	}
-	for (auto item :nPtsGraph[I][idx]) {
-		warningSet.insert(item);
-	}
-	return false;
+#ifdef GROUP_BY_NAME
+    if (idx > nodeFactory.getConstantIntNode()) {
+        std::string varName = nodeFactory.getNodeName(idx);
+        if (warningVars.count(varName)) {
+            return true;
+        }
+        else {
+            warningVars.insert(varName);
+            return false;
+        }
+    }
+    return false;
+#else
+
+    for (auto aa:nAAMap[I][idx])
+    {
+        if (aa <= nodeFactory.getConstantIntNode())
+            continue;
+        if (warningSet.find(aa) != warningSet.end()) {
+            return true;
+        }
+        for (auto item:nPtsGraph[I]) {
+            //if (warningSet.find(item.first) == warningSet.end())
+            //	continue;
+            //OP<<"item = "<<item.first<<"\n";
+            if (nodeFactory.isObjectNode(aa)) {
+                unsigned offset = nodeFactory.getObjectOffset(aa);
+                if (warningSet.find(aa - offset) != warningSet.end())
+                {
+                    return true;
+                }
+            }
+            else {
+                //OP<<"value node.\n";
+                if (warningSet.find(aa) != warningSet.end())
+                {
+                    return true;
+                }
+            }
+        }
+    }
+    for (auto aa:nAAMap[I][idx]) {
+        warningSet.insert(aa);
+    }
+    for (auto item :nPtsGraph[I][idx]) {
+        warningSet.insert(item);
+    }
+    return false;
+#endif
 }
 void FuncAnalysis::calStackVar() {
     int numDecl = 0;

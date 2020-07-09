@@ -2047,7 +2047,7 @@ void FuncAnalysis::setGlobalQualies(std::vector<int> &initArray)
             continue;
         NodeIndex fIndex = nodeFactory.getValueNodeFor(func);
         getDef(func);
-        std::string fname = getScopeName(func, Ctx->funcToMd, Ctx->Funcs);
+        std::string fname = getScopeName(func);
         //OP<<"fname = "<<fname<<"\n";
         if (Ctx->FSummaries.find(func) != Ctx->FSummaries.end() && Ctx->FSummaries[func].updateVec.size())
         {

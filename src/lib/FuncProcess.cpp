@@ -101,13 +101,13 @@ void FuncAnalysis::processInitFuncs (Instruction *I, llvm::Function* Callee, boo
         }
     }
 }
-void FuncAnalysis::processCopyFuncs (Instruction *I, llvm::Function* Callee, bool init, std::vector<int> &in, std::vector<int> &out)
+void FuncAnalysis::processCopyFuncs(Instruction *I, llvm::Function *Callee, bool init, std::vector<int> &in, std::vector<int> &out)
 {
     unsigned numNodes = nodeFactory.getNumNodes();
     CallInst *CI = dyn_cast<CallInst>(I);
-    if(CI->getNumArgOperands() < 3)
+    if (CI->getNumArgOperands() < 3)
         return;
-    std::set<const llvm::Value*> reqVisit;
+    std::set<const llvm::Value *> reqVisit;
 
     Value *dst = CI->getArgOperand(0);
     Value *src = CI->getArgOperand(1);
@@ -115,143 +115,147 @@ void FuncAnalysis::processCopyFuncs (Instruction *I, llvm::Function* Callee, boo
     NodeIndex dstIndex = nodeFactory.getValueNodeFor(dst);
     NodeIndex srcIndex = nodeFactory.getValueNodeFor(src);
     NodeIndex sizeIndex = nodeFactory.getValueNodeFor(size);
-   
+
     //0.set the qualifer req for args
     if (out.at(srcIndex) == _UNKNOWN)
     {
         setReqFor(I, src, out, reqVisit);
-	out.at(srcIndex) = _ID;
+        out.at(srcIndex) = _ID;
     }
     if (out.at(dstIndex) == _UNKNOWN)
     {
         setReqFor(I, dst, out, reqVisit);
-	out.at(dstIndex) = _ID;
+        out.at(dstIndex) = _ID;
     }
     if (out.at(sizeIndex) == _UNKNOWN)
     {
         setReqFor(I, size, out, reqVisit);
-	out.at(sizeIndex) = _ID;
+        out.at(sizeIndex) = _ID;
     }
-    if(!dst->getType()->isPointerTy() || !src->getType()->isPointerTy())
+    if (!dst->getType()->isPointerTy() || !src->getType()->isPointerTy())
         return;
-    
+
     if (out.at(srcIndex) == _UD || out.at(sizeIndex) == _UD)
     {
         out.at(dstIndex) = _UD;
         return;
     }
     uint64_t objSize = 0;
-    //1. If we copy an arg node to a heap pbj or an unknown pointer obj, 
+    //1. If we copy an arg node to a heap pbj or an unknown pointer obj,
     //we need to set the requirement for arg
     for (auto obj : nPtsGraph[I][dstIndex])
-    {   
+    {
         //copy to the heap
         if (obj < nodeFactory.getNullPtrNode() || nodeFactory.isHeapNode(obj))
-        {   
+        {
             for (auto srcObj : nPtsGraph[I][srcIndex])
             {
                 if (srcObj <= nodeFactory.getConstantIntNode())
                     continue;
                 unsigned srcObjOffset = nodeFactory.getObjectOffset(srcObj);
                 unsigned srcObjSize = nodeFactory.getObjectSize(srcObj);
-                for (unsigned i = srcObjOffset; i < srcObjSize-srcObjOffset; i++)
+                for (unsigned i = srcObjOffset; i < srcObjSize - srcObjOffset; i++)
                 {
                     if (nQualiArray[I].at(srcObj + i) == _UNKNOWN)
                     {
-			qualiReq.at(srcObj+i) = _ID;
+                        qualiReq.at(srcObj + i) = _ID;
                         out.at(srcObj + i) = _ID;
-                        //DFS (I, srcObj + i);
                     }
                 }
             }
         }
-	if (nodeFactory.isArgNode(obj)) {
-	    for (auto srcObj : nPtsGraph[I][srcIndex]) {
-		if (srcObj <= nodeFactory.getConstantIntNode())
-			continue;
-		unsigned srcObjOffset = nodeFactory.getObjectOffset(srcObj);
-		unsigned srcObjSize = nodeFactory.getObjectSize(srcObj);
-		for (unsigned i = srcObjOffset; i < srcObjSize-srcObjOffset; i++) {
-		    if (in.at(srcObj + i) == _UNKNOWN)
-		    {
-			relatedNode[obj+i].insert(srcObj+i);
-			relatedNode[obj+i].insert(relatedNode[srcObj+i].begin(), relatedNode[srcObj+i].end());
-		    }
-		}
-	    }
-	}
+        if (nodeFactory.isArgNode(obj))
+        {
+            for (auto srcObj : nPtsGraph[I][srcIndex])
+            {
+                if (srcObj <= nodeFactory.getConstantIntNode())
+                    continue;
+                unsigned srcObjOffset = nodeFactory.getObjectOffset(srcObj);
+                unsigned srcObjSize = nodeFactory.getObjectSize(srcObj);
+                for (unsigned i = srcObjOffset; i < srcObjSize - srcObjOffset; i++)
+                {
+                    if (in.at(srcObj + i) == _UNKNOWN)
+                    {
+                        relatedNode[obj + i].insert(srcObj + i);
+                        relatedNode[obj + i].insert(relatedNode[srcObj + i].begin(), relatedNode[srcObj + i].end());
+                    }
+                }
+            }
+        }
     }
     //2. Identify the object size to be copied.
     for (auto obj : nPtsGraph[I][dstIndex])
     {
         if (obj <= nodeFactory.getConstantIntNode())
             continue;
-	if (objSize > 0)
-        	objSize = ((objSize < nodeFactory.getObjectSize(obj))? objSize : nodeFactory.getObjectSize(obj));
-	else
-		objSize = nodeFactory.getObjectSize(obj);
-	if(nodeFactory.isUnionObjectNode(obj))
-	{
-		objSize = 1;
-		break;
-	}
+        if (objSize > 0)
+            objSize = ((objSize < nodeFactory.getObjectSize(obj)) ? objSize : nodeFactory.getObjectSize(obj));
+        else
+            objSize = nodeFactory.getObjectSize(obj);
+        if (nodeFactory.isUnOrArrObjNode(obj))
+        {
+            objSize = 1;
+            break;
+        }
         //copy from middle, the field pointer.
-        if (objSize>nodeFactory.getObjectOffset(obj) && nodeFactory.getObjectOffset(obj) != 0)
+        if (objSize > nodeFactory.getObjectOffset(obj) && nodeFactory.getObjectOffset(obj) != 0)
         {
             objSize = nodeFactory.getObjectSize(obj) - nodeFactory.getObjectOffset(obj);
         }
     }
     for (auto srcObj : nPtsGraph[I][srcIndex])
     {
-	if(srcObj <= nodeFactory.getConstantIntNode())
-		continue;
-  	if(nodeFactory.isUnionObjectNode(srcObj))
+        if (srcObj <= nodeFactory.getConstantIntNode())
+            continue;
+        if (nodeFactory.isUnOrArrObjNode(srcObj))
         {
-                objSize = 1;
-                break;
+            objSize = 1;
+            break;
         }
-	unsigned srcObjOffset = nodeFactory.getObjectOffset(srcObj);
-	 objSize = ((objSize < nodeFactory.getObjectSize(srcObj)-srcObjOffset)? objSize : nodeFactory.getObjectSize(srcObj)-srcObjOffset);
+        unsigned srcObjOffset = nodeFactory.getObjectOffset(srcObj);
+        objSize = ((objSize < nodeFactory.getObjectSize(srcObj) - srcObjOffset) ? objSize : nodeFactory.getObjectSize(srcObj) - srcObjOffset);
     }
     //consider casting to i8* before copy, this case may be included into the previous calculate the object size case.
     if (BitCastInst *BCI = dyn_cast<BitCastInst>(src))
     {
         const Type *type = cast<PointerType>(I->getOperand(0)->getType())->getElementType();
 
-        while (const ArrayType *arrayType= dyn_cast<ArrayType>(type))
+        while (const ArrayType *arrayType = dyn_cast<ArrayType>(type))
             type = arrayType->getElementType();
         if (const StructType *structType = dyn_cast<StructType>(type))
         {
             if (!structType->isOpaque())
             {
-                const StructInfo* stInfo = Ctx->structAnalyzer.getStructInfo(structType, F->getParent());
+                const StructInfo *stInfo = Ctx->structAnalyzer.getStructInfo(structType, F->getParent());
                 objSize = stInfo->getExpandedSize();
             }
-	    if(!structType->isLiteral() && structType->getStructName().startswith("union"))
-		objSize = 1;
+            //OP<<"4objSize = "<<objSize<<"\n";
+            if (!structType->isLiteral() && structType->getStructName().startswith("union"))
+                objSize = 1;
         }
     }
     if (out.at(dstIndex) == _ID)
-    { 
+    {
         // Now construct the pointer and memory object variable
         // It depends on whether the type of this variable is a struct or not
         bool init = false;
-        for(auto obj : nPtsGraph[I][dstIndex])
+        for (auto obj : nPtsGraph[I][dstIndex])
         {
             //unsigned objSize = nodeFactory.getObjectSize(obj);
             //considering memcpy to universal ptr node
-	    if(obj<=nodeFactory.getConstantIntNode())
-		continue;
-            for(auto srcObj : nPtsGraph[I][srcIndex])
+            if (obj <= nodeFactory.getConstantIntNode())
+                continue;
+            for (auto srcObj : nPtsGraph[I][srcIndex])
             {
                 if (obj < nodeFactory.getNullPtrNode())
                 {
                     if (out.at(srcObj) == _UNKNOWN)
                     {
                         qualiReq[srcObj] = _ID;
-			out.at(srcObj) = _ID;
-                    } 
+                        out.at(srcObj) = _ID;
+                    }
                 }
+                //unsigned objSize = nodeFactory.getObjectSize(srcObj);
                 for (int i = 0; i < objSize; i++)
                 {
                     //considering memcpy from universal ptr node
@@ -260,27 +264,36 @@ void FuncAnalysis::processCopyFuncs (Instruction *I, llvm::Function* Callee, boo
                     {
                         srcQuali = _ID;
                     }
-                    else{
+                    else
+                    {
                         srcQuali = out.at(srcObj + i);
-			if (srcQuali == _UNKNOWN) {
-			    relatedNode[obj+i].insert(srcObj+i);
-			    for (auto aa : nAAMap[I][srcObj]){
-			    	relatedNode[obj+i].insert(relatedNode[aa].begin(), relatedNode[aa].end());
-			    }
-			}
+                        if (srcQuali == _UNKNOWN)
+                        {
+                            relatedNode[obj + i].insert(srcObj + i);
+                            for (auto aa : nAAMap[I][srcObj])
+                            {
+                                relatedNode[obj + i].insert(relatedNode[aa].begin(), relatedNode[aa].end());
+                            }
+#ifdef _RELATED
+                            OP << "related node for " << obj + i << "\n";
+                            for (auto item : relatedNode[obj + i])
+                                OP << item << "/";
+                            OP << "\n";
+#endif
+                        }
                     }
-		    if (obj + i >= numNodes)
-			break;
+                    if (obj + i >= numNodes)
+                        break;
                     if (!init || srcQuali == _ID)
                     {
                         out.at(obj + i) = srcQuali;
                         init = true;
                     }
-                    else{
+                    else
+                    {
                         out.at(obj + i) = std::min(out.at(obj + i), srcQuali);
                     }
                 }
-
             }
         }
     }
@@ -398,45 +411,172 @@ void FuncAnalysis::processTransferFuncs (Instruction *I, llvm::Function* Callee,
         }
     }
 }
-void FuncAnalysis::processFuncs (llvm::Instruction *I, llvm::Function* Callee, bool init, std::vector<int>& in,std::vector<int>& out)
+void FuncAnalysis::processFuncs(llvm::Instruction *I, llvm::Function *Callee, bool init, std::vector<int> &in, std::vector<int> &out)
 {
-    //only update the arguments and the return value from Callees, req propagation is done later in summarizeFuncs().   
-    if (Callee->empty()) {
-		auto FIter = Ctx->Funcs.find(Callee->getName().str());
-		if (FIter != Ctx->Funcs.end()) {
-			Callee = FIter->second;
-    	}
-    }
-    if(Callee == NULL || Ctx->FSummaries.find(Callee) == Ctx->FSummaries.end()){
-        return ;
-    }
-    std::set<const llvm::Value*> reqVisit;
-    //Insert the callee's related BC to the caller in the mode of multi-layer call relations
-    #ifdef ML_MODE
-    for (auto item: Ctx->FSummaries[Callee].relatedBC) {
-	fSummary.relatedBC.insert(item);
-    }
-    #endif
+
+    OP << "inside processFuncs:\n";
     CallInst *CI = dyn_cast<CallInst>(I);
+#ifdef RET_CHECK
+    //If there's a retCheck, then we initilaize all the arguments
+    bool retCheck = false;
+    for (User *U : I->users())
+                {
+                    Instruction *Ins = dyn_cast<Instruction>(U);
+                    if (ICmpInst *ICI = dyn_cast<ICmpInst>(Ins)) {
+                        Value *cmp = ICI->getOperand(1);
+			if (ConstantPointerNull *cpn = dyn_cast<ConstantPointerNull>(cmp)) {
+                            retCheck = true;
+                        }
+                        else if (ConstantInt *cmp = dyn_cast<ConstantInt>(cmp)) {
+                            retCheck = true;
+                        }
+                    }
+                    if (StoreInst *SI = dyn_cast<StoreInst>(Ins)) {
+                        for (User *UU : SI->getPointerOperand()->users()) {
+                            if (ConstantExpr *CE = dyn_cast<ConstantExpr>(UU))
+                                continue;
+                            Instruction *UseIns = dyn_cast<Instruction>(UU);
+                            if (LoadInst *LI = dyn_cast<LoadInst>(UseIns))
+                            {
+                                for (User *LIU : LI->users()) {
+                                    Instruction *LUseIns = dyn_cast<Instruction>(LIU);
+                                    //OP<<"LUseIns = "<<*LUseIns<<"\n";
+                                    if (ICmpInst *ICI = dyn_cast<ICmpInst>(LUseIns)) {
+                                        Value *cmp = ICI->getOperand(1);
+                                        NodeIndex cmpIndex = nodeFactory.getValueNodeFor(cmp);
+                                        if (cmpIndex > nodeFactory.getConstantIntNode()) continue;
+					if (cmpIndex == nodeFactory.getConstantIntNode()){
+						retCheck = true;
+					}
+                                        else if (ConstantPointerNull *cpn = dyn_cast<ConstantPointerNull>(cmp)) {
+                                            retCheck = true;
+                                        }
+                                        else if (ConstantInt *cmp = dyn_cast<ConstantInt>(cmp)) {
+                                            retCheck = true;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+               }
+#endif
+    if (Ctx->PreSumFuncs.count(Callee->getName().str()) || Callee->getName().str().find("printf") != std::string::npos) {
+        for (int argNo = 0; argNo < CI->getNumArgOperands(); argNo++) {
+            NodeIndex argNode = nodeFactory.getValueNodeFor(CI->getArgOperand(argNo));
+            for (auto obj : nPtsGraph[I][argNode])
+            {
+                if (obj <= nodeFactory.getConstantIntNode())
+                    continue;
+                unsigned objSize = nodeFactory.getObjectSize(obj);
+                unsigned objOffset = nodeFactory.getObjectOffset(obj);
+                for (unsigned i = 0; i < objSize; i++)
+                {
+                    if (nQualiArray[I].at(obj - objOffset + i) == _UNKNOWN)
+                    {
+                        out.at(obj - objOffset + i) = _ID;
+
+                        //DFS(I, obj - objOffset + i);
+                    }
+                }
+            }
+        }
+        //update return value to be: initialized:
+        NodeIndex retNode = nodeFactory.getValueNodeFor(I);
+        out.at(retNode) = _ID;
+        for (auto retObj : nPtsGraph[I][retNode]) {
+            if (retObj <= nodeFactory.getConstantIntNode())
+                continue;
+            unsigned retObjSize = nodeFactory.getObjectSize(retObj);
+            unsigned objOffset = nodeFactory.getObjectOffset(retObj);
+            for (unsigned i = 0; i < retObjSize; i++) {
+                out.at(retObj-objOffset+i) = _ID;
+            }
+        }
+        return;
+    }
+    if (Callee->empty())
+    {
+        auto FIter = Ctx->Funcs.find(Callee->getName().str());
+        if (FIter != Ctx->Funcs.end())
+        {
+            Callee = FIter->second;
+        }
+    }
+    OP << "Callee: " << Callee << ": " << Callee->getName().str() << "\n";
+    if (Ctx->incAnalysis && Ctx->FSummaries.find(Callee) == Ctx->FSummaries.end())
+    {
+        //assert(Ctx->modifiedFuncs.find(Callee) == Ctx->modifiedFuncs.end() && "modifiedFuncs not summarized before being called.");
+        std::string fname = getScopeName(Callee, Ctx->funcToMd, Ctx->Funcs);
+
+        size_t pos = fname.find(curVersion);
+        if (pos != std::string::npos)
+        {
+            fname.replace(pos, curVersion.size(), prevVersion);
+        }
+
+        std::string sFile = oldDir + fname + ".sum";
+        OP << "[[callee's summary file :" << sFile << "\n";
+        std::ifstream ifile(sFile);
+        if (ifile)
+        {
+            boost::archive::text_iarchive ia(ifile);
+            ia >> Ctx->FSummaries[Callee];
+            ifile.close();
+            OP << "[[Summary for  " << fname << " loaded!\n";
+        }
+        else {
+            OP<<"[[Summary not existed.\n";
+        }
+    }
+
+    //only update the arguments and the return value from Callees, req propagation is done later in summarizeFuncs().
+#ifdef PRINT_SUMF
+    OP << "Functions in Ctx->FSummaries: \n";
+    for (auto item : Ctx->FSummaries)
+    {
+        OP << "--Addr : " << item.first << ", name: " << item.first->getName().str() << "\n";
+    }
+#endif
+    if (Callee == NULL || Ctx->FSummaries.find(Callee) == Ctx->FSummaries.end())
+    {
+        OP << "Function not Found.\n";
+        return;
+    }
+
+    //Callee's summary
+    std::set<const llvm::Value *> reqVisit;
+//Insert the callee's related BC to the caller
+#ifdef _LINK
+    for (auto item : Ctx->FSummaries[Callee].relatedBC)
+    {
+        fSummary.relatedBC.insert(item);
+    }
+#endif
     std::vector<const Argument *> calleeArgs;
     for (Function::arg_iterator itr = Callee->arg_begin(), ite = Callee->arg_end(); itr != ite; ++itr)
     {
-
         const Argument *arg = &*itr;
         calleeArgs.push_back(arg);
     }
     int sumNumNodes = Ctx->FSummaries[Callee].noNodes;
+    if (Ctx->FSummaries[Callee].isEmpty())
+    {
+        OP << "Summary is empty\n";
+        return;
+    }
     //update the argument and propagate the requirement
     for (int argNo = 0; argNo < CI->getNumArgOperands(); argNo++)
     {
+
         NodeIndex argNode = nodeFactory.getValueNodeFor(CI->getArgOperand(argNo));
-	//Deal with VarArg function
+        //Deal with VarArg function
         if (argNo >= calleeArgs.size())
-        {  
+        {
             if (out.at(argNode) == _UNKNOWN)
-            {   
+            {
                 out.at(argNode) = _ID;
-		reqVisit.clear();
+                reqVisit.clear();
                 setReqFor(I, CI->getArgOperand(argNo), out, reqVisit);
             }
             for (auto obj : nPtsGraph[I][argNode])
@@ -448,25 +588,24 @@ void FuncAnalysis::processFuncs (llvm::Instruction *I, llvm::Function* Callee, b
                 for (unsigned i = 0; i < objSize; i++)
                 {
                     if (nQualiArray[I].at(obj - objOffset + i) == _UNKNOWN)
-                    {   
+                    {
                         out.at(obj - objOffset + i) = _ID;
                     }
                 }
             }
             continue;
         }
-	
-        NodeIndex sumArgNode = Ctx->FSummaries[Callee].args[argNo + 1].getNodeIndex();;
-	//Check the pointer itself
-	if (Ctx->FSummaries[Callee].reqVec.at(sumArgNode) == _ID)
+        NodeIndex sumArgNode = Ctx->FSummaries[Callee].args[argNo + 1].getNodeIndex();
+        //Check the pointer itself
+        if (Ctx->FSummaries[Callee].reqVec.at(sumArgNode) == _ID)
         {
             if (out.at(argNode) == _UNKNOWN)
             {
-		reqVisit.clear();
+                reqVisit.clear();
                 setReqFor(I, CI->getArgOperand(argNo), out, reqVisit);
             }
         }
-	unsigned numNodes = nodeFactory.getNumNodes();
+        unsigned numNodes = nodeFactory.getNumNodes();
         for (auto sumObj : Ctx->FSummaries[Callee].sumPtsGraph[sumArgNode])
         {
             unsigned sumObjSize = Ctx->FSummaries[Callee].args[argNo].getObjSize();
@@ -475,195 +614,262 @@ void FuncAnalysis::processFuncs (llvm::Instruction *I, llvm::Function* Callee, b
             {
                 if (obj <= nodeFactory.getConstantIntNode())
                     continue;
-		//Deal with the union object 
-		unsigned objSize = nodeFactory.getObjectSize(obj);
-		unsigned objOffset = nodeFactory.getObjectOffset(obj);
-		unsigned checkSize = std::min(objSize-objOffset, sumObjSize-sumObjOffset);
-		if (nodeFactory.isUnionObjectNode(obj))
-		{
-			bool init = false;
-			for (unsigned i = 0; i < checkSize; i++)
-	                {
-			   
-             	           if (Ctx->FSummaries[Callee].updateVec[sumObj + i] != _UNKNOWN){
-				if (!init) {	
-				    if (out.at(obj) >= Ctx->FSummaries[Callee].reqVec[sumObj + i]){
-				        out.at(obj) = Ctx->FSummaries[Callee].updateVec[sumObj + i];
-				        init = true;
-				    }
-			   	}else{
-				    if (out.at(obj) >= Ctx->FSummaries[Callee].reqVec[sumObj + i]) {
-                          	        out.at(obj) = std::min( out.at(obj), Ctx->FSummaries[Callee].updateVec[sumObj + i]);
-				    }
-				}
-			   }
-			#ifdef ML_MODE
-			   else{
-				nodeFactory.setWL(obj, Ctx->FSummaries[Callee].args[sumObj+i].getWhiteList());
-	                        nodeFactory.setBL(obj, Ctx->FSummaries[Callee].args[sumObj+i].getBlackList());
-
-			   }
-			#endif
-               		 }
-		}
-		else
-    	        {			
-                //update the arg->obj from the offset till end
-                for (unsigned i = 0; i < checkSize; i++)
+                //Deal with the union object
+                unsigned objSize = nodeFactory.getObjectSize(obj);
+                unsigned objOffset = nodeFactory.getObjectOffset(obj);
+                unsigned checkSize = std::min(objSize - objOffset, sumObjSize - sumObjOffset);
+                if (nodeFactory.isUnOrArrObjNode(obj))
                 {
-		    if(obj + i >= numNodes)	
-        		break;            
-                    if (Ctx->FSummaries[Callee].updateVec[sumObj + i] != _UNKNOWN)
-		    {
-			if (out.at(obj+i) >= Ctx->FSummaries[Callee].reqVec[sumObj + i]) {
-                            out.at(obj + i) = Ctx->FSummaries[Callee].updateVec[sumObj + i];
-			}
-		    }
-		    else  {
-			#ifdef ML_MODE
-			nodeFactory.setWL(obj + i, Ctx->FSummaries[Callee].args[sumObj+i].getWhiteList());
-                        nodeFactory.setBL(obj + i, Ctx->FSummaries[Callee].args[sumObj+i].getBlackList());
-			#endif
-			std::set<NodeIndex> sumRSet = Ctx->FSummaries[Callee].args[sumObj+i].getRelatedArgs();
-			if (sumRSet.empty())
-			    continue;
-			bool init = false;
-			for (auto sumRitem : sumRSet) {
-			    int argNoCurr = Ctx->FSummaries[Callee].args[sumRitem].getNodeArgNo();
-			    NodeIndex argNoIndex = nodeFactory.getValueNodeFor(CI->getArgOperand(argNoCurr));	    
-			    if (argNoIndex == AndersNodeFactory::InvalidIndex){
-				continue;
-			    }
-			    if (nodeFactory.isObjectNode(argNoIndex) && nodeFactory.getObjectSize(argNoIndex) < i)
-				continue;
-			    if (argNoIndex +i >= nodeFactory.getNumNodes())
-				continue;
-			    if (out.at(argNoIndex + i) == _UNKNOWN) {
-				relatedNode[obj+i].insert(relatedNode[argNoIndex + i].begin(), relatedNode[argNoIndex + i].end());
-			    }
-			    if (!init) {
-				out.at(obj + i) = out.at(argNoIndex + i);
-				init = true;
-			    }
-			    else {
-				out.at(obj + i) = std::min(out.at(obj + i), out.at(argNoIndex + i));
-			    }
-			}
-		    }
+                    bool init = false;
+                    for (unsigned i = 0; i < checkSize; i++)
+                    {
+                        if (Ctx->FSummaries[Callee].updateVec[sumObj + i] != _UNKNOWN)
+                        {
+                            if (!init)
+                            {
+                                if (out.at(obj) >= Ctx->FSummaries[Callee].reqVec[sumObj + i])
+                                {
+                                    out.at(obj) = Ctx->FSummaries[Callee].updateVec[sumObj + i];
+                                    init = true;
+                                }
+                            }
+                            else
+                            {
+                                if (out.at(obj) >= Ctx->FSummaries[Callee].reqVec[sumObj + i])
+                                {
+                                    out.at(obj) = std::min(out.at(obj), Ctx->FSummaries[Callee].updateVec[sumObj + i]);
+                                }
+                            }
+                        }
+#ifdef ListProp
+                        if (Ctx->FSummaries[Callee].updateVec[sumObj + i] != _ID)
+                        {
+                            nodeFactory.setWL(obj, Ctx->FSummaries[Callee].args[sumObj + i].getWhiteList());
+                            nodeFactory.setBL(obj, Ctx->FSummaries[Callee].args[sumObj + i].getBlackList());
+                        }
+#endif
+#ifdef RM
+                        if (Ctx->FSummaries[Callee].reqVec.at(sumObj + i) == _ID)
+                        {
+                            if (out.at(obj) == _UNKNOWN)
+                            {
+                                out.at(obj) = _ID;
+                                //DFS(I, obj);
+                            }
+                        }
+#endif
+                    }
                 }
-		}
+                else
+                {
+                    //update the arg->obj from the offset till end
+                    for (unsigned i = 0; i < checkSize; i++)
+                    {
+                        if (obj + i >= numNodes)
+                            break;
+#ifdef ListProp
+                        if (Ctx->FSummaries[Callee].updateVec[sumObj + i] != _ID)
+                        {
+                            nodeFactory.setWL(obj + i, Ctx->FSummaries[Callee].args[sumObj + i].getWhiteList());
+                            nodeFactory.setBL(obj + i, Ctx->FSummaries[Callee].args[sumObj + i].getBlackList());
+                        }
+#endif
+
+                        if (Ctx->FSummaries[Callee].updateVec[sumObj + i] != _UNKNOWN)
+                        {
+                            if (out.at(obj + i) >= Ctx->FSummaries[Callee].reqVec[sumObj + i])
+                            {
+                                out.at(obj + i) = Ctx->FSummaries[Callee].updateVec[sumObj + i];
+                            }
+                        }
+                        else
+                        {
+                            std::set<NodeIndex> sumRSet = Ctx->FSummaries[Callee].args[sumObj + i].getRelatedArgs();
+                            if (sumRSet.empty())
+                                continue;
+                            bool init = false;
+                            for (auto sumRitem : sumRSet)
+                            {
+                                if (Ctx->FSummaries[Callee].args.size() == 0)
+                                    break;
+                                int argNoCurr = Ctx->FSummaries[Callee].args[sumRitem].getNodeArgNo();
+                                if (argNoCurr >= CI->getNumArgOperands())
+                                {
+                                    continue;
+                                }
+                                NodeIndex argNoIndex = nodeFactory.getValueNodeFor(CI->getArgOperand(argNoCurr));
+                                if (argNoIndex == AndersNodeFactory::InvalidIndex)
+                                {
+                                    continue;
+                                }
+                                if (nodeFactory.isObjectNode(argNoIndex) && nodeFactory.getObjectSize(argNoIndex) < i)
+                                    continue;
+                                if (argNoIndex + i >= nodeFactory.getNumNodes())
+                                    continue;
+                                if (out.at(argNoIndex + i) == _UNKNOWN)
+                                {
+                                    relatedNode[obj + i].insert(relatedNode[argNoIndex + i].begin(), relatedNode[argNoIndex + i].end());
+                                }
+                                if (!init)
+                                {
+                                    out.at(obj + i) = out.at(argNoIndex + i);
+                                    init = true;
+                                }
+                                else
+                                {
+                                    out.at(obj + i) = std::min(out.at(obj + i), out.at(argNoIndex + i));
+                                }
+                            }
+                        }
+#ifdef RM
+                        if (Ctx->FSummaries[Callee].reqVec.at(sumObj + i) == _ID)
+                        {
+                            if (out.at(obj + i) == _UNKNOWN)
+                            {
+                                out.at(obj + i) = _ID;
+                                //DFS(I, obj + i);
+                            }
+                        }
+#endif
+                    }
+                }
                 //update the rest object if arg point to the middle of the obj
-                //unsigned objOffset = nodeFactory.getObjectOffset(obj);
                 if (sumObjOffset > 0 && objOffset > 0)
                 {
                     if (sumObjOffset < objOffset)
                         continue;
-                     
+
                     for (unsigned i = objOffset; i > 0; i--)
                     {
                         if (Ctx->FSummaries[Callee].updateVec[sumObj - i] != _UNKNOWN)
                         {
-			    if (out.at(obj-i) >= Ctx->FSummaries[Callee].reqVec[sumObj - i]) {
+                            if (out.at(obj - i) >= Ctx->FSummaries[Callee].reqVec[sumObj - i])
+                            {
                                 out.at(obj - i) = Ctx->FSummaries[Callee].updateVec[sumObj - i];
-			    }
+                            }
+#ifdef RM
+                            if (Ctx->FSummaries[Callee].reqVec.at(sumObj - i) == _ID)
+                            {
+                                out.at(obj - i) = _ID;
+                                //DFS(I, obj - i);
+                            }
+#endif
                         }
-			#ifdef ML_MODE
-			else {
-				nodeFactory.setWL(obj - i, Ctx->FSummaries[Callee].args[sumObj-i].getWhiteList());
-                       		nodeFactory.setBL(obj - i, Ctx->FSummaries[Callee].args[sumObj-i].getBlackList());
-			}
-			#endif
+#ifdef ListProp
+                        if (Ctx->FSummaries[Callee].updateVec[sumObj - i] != _ID)
+                        {
+                            nodeFactory.setWL(obj - i, Ctx->FSummaries[Callee].args[sumObj - i].getWhiteList());
+                            nodeFactory.setBL(obj - i, Ctx->FSummaries[Callee].args[sumObj - i].getBlackList());
+                        }
+#endif
                     }
                 }
             }
-
         }
     }
     //update the return value and object
     if (I->getType()->isVoidTy())
     {
+        OP<<"return void.\n";
         return;
     }
     NodeIndex retNode = nodeFactory.getValueNodeFor(I);
     NodeIndex sumRetNode = Ctx->FSummaries[Callee].getRetNodes();
     out.at(retNode) = Ctx->FSummaries[Callee].updateVec[sumRetNode];
-    //context-sensitivity	
+    //context-sensitivity
     std::set<NodeIndex> sumRSet = Ctx->FSummaries[Callee].args[sumRetNode].getRelatedArgs();
-    //Ctx->FSummaries[Callee].summary();
-    if (!sumRSet.empty()) {
+    if (out.at(retNode) != _ID) {
+        nodeFactory.setWL(retNode, Ctx->FSummaries[Callee].args[sumRetNode].getWhiteList());
+        nodeFactory.setBL(retNode, Ctx->FSummaries[Callee].args[sumRetNode].getBlackList());
+    }
+    if (!sumRSet.empty())
+    {
         bool init = false;
-        for (auto sumRitem : sumRSet) {
-    	    int argNoCurr = Ctx->FSummaries[Callee].args[sumRitem].getNodeArgNo();
-	    if (isa<Function>(CI->getArgOperand(argNoCurr)))
-		continue;
-	    NodeIndex argNoIndex = nodeFactory.getObjectNodeFor(CI->getArgOperand(argNoCurr));
-	    int argOffset = Ctx->FSummaries[Callee].args[sumRitem].getOffset();
-            if (argNoIndex == AndersNodeFactory::InvalidIndex && argOffset == 0){
-	        argNoIndex = nodeFactory.getValueNodeFor(CI->getArgOperand(argNoCurr));
-	    }
-	    if (argNoIndex == AndersNodeFactory::InvalidIndex)
-		continue;
-            if (out.at(argNoIndex + argOffset) == _UNKNOWN) {
+        for (auto sumRitem : sumRSet)
+        {
+            int argNoCurr = Ctx->FSummaries[Callee].args[sumRitem].getNodeArgNo();
+            if (argNoCurr >= CI->getNumArgOperands() || isa<Function>(CI->getArgOperand(argNoCurr)))
+                continue;
+            NodeIndex argNoIndex = nodeFactory.getObjectNodeFor(CI->getArgOperand(argNoCurr));
+            int argOffset = Ctx->FSummaries[Callee].args[sumRitem].getOffset();
+            if (argNoIndex == AndersNodeFactory::InvalidIndex && argOffset == 0)
+            {
+                argNoIndex = nodeFactory.getValueNodeFor(CI->getArgOperand(argNoCurr));
+            }
+            if (argNoIndex == AndersNodeFactory::InvalidIndex)
+                continue;
+            if (out.at(argNoIndex + argOffset) == _UNKNOWN)
+            {
                 relatedNode[retNode].insert(relatedNode[argNoIndex + argOffset].begin(), relatedNode[argNoIndex + argOffset].end());
             }
-            if (!init) {
+            if (!init)
+            {
                 out.at(retNode) = out.at(argNoIndex + argOffset);
                 init = true;
             }
-            else {
-            	out.at(retNode) = std::min(out.at(retNode), out.at(argNoIndex + argOffset));
+            else
+            {
+                out.at(retNode) = std::min(out.at(retNode), out.at(argNoIndex + argOffset));
             }
         }
-     }
-
-
-
+    }
+    //
     for (auto sumRetObj : Ctx->FSummaries[Callee].sumPtsGraph[sumRetNode])
     {
-	unsigned sumRetSize = Ctx->FSummaries[Callee].getRetSize();
+        unsigned sumRetSize = Ctx->FSummaries[Callee].getRetSize();
         unsigned sumRetOffset = Ctx->FSummaries[Callee].getRetOffset();
-	
+
         for (auto retObj : nPtsGraph[I][retNode])
         {
-            if(retObj <= nodeFactory.getConstantIntNode())
+            if (retObj <= nodeFactory.getConstantIntNode())
                 continue;
-	    unsigned retObjSize = nodeFactory.getObjectSize(retObj);
-	    unsigned retObjOffset = nodeFactory.getObjectOffset(retObj);
-	    unsigned checkSize = std::min(sumRetSize - sumRetOffset, retObjSize - retObjOffset);
+            unsigned retObjSize = nodeFactory.getObjectSize(retObj);
+            unsigned retObjOffset = nodeFactory.getObjectOffset(retObj);
+            unsigned checkSize = std::min(sumRetSize - sumRetOffset, retObjSize - retObjOffset);
+
             for (unsigned i = 0; i < checkSize; i++)
             {
-                if (Ctx->FSummaries[Callee].updateVec[sumRetObj + i] != _UNKNOWN){
+                if (Ctx->FSummaries[Callee].updateVec[sumRetObj + i] != _UNKNOWN)
+                {
                     out.at(retObj + i) = Ctx->FSummaries[Callee].updateVec[sumRetObj + i];
-		    if (Ctx->FSummaries[Callee].args[sumRetObj+i].getMayNull()) {
-			nodeFactory.setMayNull(sumRetObj+i);
-		    }
-		}
-		else  {
-                        std::set<NodeIndex> sumRSet = Ctx->FSummaries[Callee].args[sumRetObj+i].getRelatedArgs();
-                        if (sumRSet.empty())
+                }
+                else
+                {
+                    std::set<NodeIndex> sumRSet = Ctx->FSummaries[Callee].args[sumRetObj + i].getRelatedArgs();
+                    if (sumRSet.empty())
+                        continue;
+                    bool init = false;
+                    for (auto sumRitem : sumRSet)
+                    {
+                        int argNoCurr = Ctx->FSummaries[Callee].args[sumRitem].getNodeArgNo();
+                        NodeIndex argNoIndex = nodeFactory.getObjectNodeFor(CI->getArgOperand(argNoCurr));
+                        if (argNoIndex == AndersNodeFactory::InvalidIndex)
                             continue;
-                        bool init = false;
-                        for (auto sumRitem : sumRSet) {
-                            int argNoCurr = Ctx->FSummaries[Callee].args[sumRitem].getNodeArgNo();
-                            NodeIndex argNoIndex = nodeFactory.getObjectNodeFor(CI->getArgOperand(argNoCurr));
-                            if (argNoIndex == AndersNodeFactory::InvalidIndex)
-                                continue;
-                            if (out.at(argNoIndex + i) == _UNKNOWN) {
-                                relatedNode[retObj+i].insert(relatedNode[argNoIndex + i].begin(), relatedNode[argNoIndex + i].end());
-                            }
-                            if (!init) {
-                                out.at(retObj + i) = out.at(argNoIndex + i);
-                                init = true;
-                            }
-                            else {
-                                out.at(retObj + i) = std::min(out.at(retObj + i), out.at(argNoIndex + i));
-                            }
+                        if (out.at(argNoIndex + i) == _UNKNOWN)
+                        {
+                            relatedNode[retObj + i].insert(relatedNode[argNoIndex + i].begin(), relatedNode[argNoIndex + i].end());
                         }
-                    }	
+                        if (!init)
+                        {
+                            out.at(retObj + i) = out.at(argNoIndex + i);
+                            init = true;
+                        }
+                        else
+                        {
+                            out.at(retObj + i) = std::min(out.at(retObj + i), out.at(argNoIndex + i));
+                        }
+                    }
+                }
+                if (out.at(retObj+i) != _ID) {
+
+                    nodeFactory.setWL(retObj + i, Ctx->FSummaries[Callee].args[sumRetObj + i].getWhiteList());
+                    nodeFactory.setBL(retObj + i, Ctx->FSummaries[Callee].args[sumRetObj + i].getBlackList());
+                }
             }
         }
     }
 }
+
 void FuncAnalysis::checkCopyFuncs(llvm::Instruction *I, llvm::Function *Callee)
 {
     CallInst *CI = dyn_cast<CallInst>(I);

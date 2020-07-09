@@ -28,6 +28,15 @@ static void SetHeapAllocFuncs(
         HeapAllocFuncs.insert(F);
     }
 }
+static void SetZeroMallocFuncs(
+        std::set<std::string> &ZeroMallocFuncs) {
+    std::string ZeroAllocFN[] = {
+            "kzalloc",
+    };
+    for (auto F : ZeroAllocFN) {
+        ZeroMallocFuncs.insert(F);
+    }
+}
 static void SetTransferFuncs(
 		std::set<std::string> &TransferFuncs) {
     std::string TransferFN[] = {

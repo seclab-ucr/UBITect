@@ -131,6 +131,7 @@ struct GlobalContext {
     std::set<std::string> CopyFuncs;
     std::set<std::string> InitFuncs;
     std::set<std::string> TransferFuncs;
+    std::set<std::string> ZeroMallocFuncs;
     std::set<std::string> ObjSizeFuncs;
     std::set<std::string> StrFuncs;
     std::set<std::string> OtherFuncs;
