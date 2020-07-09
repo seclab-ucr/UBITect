@@ -15,6 +15,7 @@
 
 #include <set>
 #include <map>
+#include <stack>
 #include <unordered_map>
 
 #define _ID 1
@@ -93,13 +94,14 @@ private:
     std::vector<int> qualiReq;
     BBToQualifier inQualiArray;
     BBToQualifier outQualiArray;
-    
+
     Summary fSummary;
     bool printWarning;
-    
     std::map<llvm::Instruction*, int *>nUpdate;
     std::set<llvm::Instruction*> VisitIns;
-    std::set<int> warningSet;
+    std::unordered_set<int> warningSet;
+    std::unordered_set<BasicBlock*> terminationBB;
+    std::set<std::string> warningVars;
     std::set<std::string> relatedBC;
     std::unordered_map<int ,std::string> eToS = {{0, "FUNCTION_PTR"}, {1, "NORMAL_PTR"}, {2, "DATA"}, {3, "OTHER"}};
     //statistics:
@@ -123,28 +125,29 @@ private:
     NodeIndex extendObjectSize(NodeIndex, const llvm::StructType*, PtsGraph&);
     void updateObjectNode(NodeIndex, NodeIndex, PtsGraph&);
     int handleContainerOf(const llvm::Instruction*, int64_t, NodeIndex, PtsGraph&);
-    void printRelatedBB(NodeIndex nodeIndex, const llvm::Value*, std::set<const Instruction*> &visit, 
-			std::string, int argNo=-1, int field=-1, llvm::Function *Callee=NULL);
-    void calculateRelatedBB(NodeIndex , const llvm::Instruction *I, std::set<NodeIndex> &visit, 
-                                        std::set<const BasicBlock *> &blacklist, std::set<const BasicBlock *> &whitelist);
+    void printRelatedBB(NodeIndex nodeIndex, const llvm::Value*, std::set<const Instruction*> &visit,
+                        std::string, int argNo=-1, int field=-1, llvm::Function *Callee=NULL);
+    void calculateRelatedBB(NodeIndex , const llvm::Instruction *I, std::set<NodeIndex> &visit,
+                            std::set<const BasicBlock *> &blacklist, std::set<const BasicBlock *> &whitelist);
     void calculateBLForUse(const llvm::Instruction *I, std::set<const BasicBlock *> &blacklist);
     void handleGEPConstant(const ConstantExpr *ce, PtsGraph &in);
     void addRelatedBC(llvm::Instruction*, NodeIndex , llvm::Function *Callee=NULL);
-
-    //Used by qualifier inference 
+    void addTerminationBB(llvm::BasicBlock* bb);
+    bool isTerminationBB(llvm::BasicBlock *bb) {return terminationBB.count(bb);}
+    //Used by qualifier inference
     void computeQualifier(llvm::Instruction *, std::vector<int> &, std::vector<int>&);
     void setGlobalQualies(std::vector<int> &);
     void qualiJoin(std::vector<int>&, std::vector<int>&, unsigned);
     void updateJoin(std::vector<int>&, std::vector<int>&, unsigned);
-    void insertUninit(const llvm::Instruction *, NodeIndex, std::set<NodeIndex> &); 
-    //used for manually summaries functions 
+    void insertUninit(const llvm::Instruction *, NodeIndex, std::set<NodeIndex> &);
+    //used for manually summaries functions
     void processInitFuncs(llvm::Instruction *, llvm::Function *, bool, std::vector<int>&, std::vector<int>&);
     void processCopyFuncs(llvm::Instruction *, llvm::Function *, bool, std::vector<int>&, std::vector<int>&);
     void processTransferFuncs(llvm::Instruction *, llvm::Function *, bool, std::vector<int>&, std::vector<int>&);
     void processFuncs(llvm::Instruction *, llvm::Function *, bool, std::vector<int>&, std::vector<int>&);
 
     //used for requirement propagation
-    void backPropagateReq(llvm::Instruction*, llvm::Value*, std::vector<int>&);  
+    void backPropagateReq(llvm::Instruction*, llvm::Value*, std::vector<int>&);
     void setReqFor(const llvm::Instruction *, const llvm::Value *, std::vector<int>&, std::set<const llvm::Value*>&);
     void DFS(llvm::Instruction *, NodeIndex);
     void summarizeFuncs(llvm::ReturnInst*);
@@ -156,27 +159,42 @@ private:
     void checkCopyFuncs(llvm::Instruction *, llvm::Function *);
     void checkTransferFuncs(llvm::Instruction *, llvm::Function *);
     void checkFuncs(llvm::Instruction *, llvm::Function *);
-    bool warningReported(llvm::Instruction*, NodeIndex idx); 
+    bool warningReported(llvm::Instruction*, NodeIndex idx);
     enum WarnType getFieldTy(llvm::Type *, int);
     enum WarnType getWType(llvm::Type *);
 
     void initSummary();
+    void getDef(llvm::Function* func) {
+        if (func->empty())
+        {
+            auto FIter = Ctx->Funcs.find(func->getName().str());
+            if (FIter != Ctx->Funcs.end())
+            {
+                func = FIter->second;
+            }
+        }
+    }
 public:
-    
+
     FuncAnalysis(llvm::Function *F_, GlobalContext *Ctx_, bool flag)
             : F(F_), Ctx(Ctx_) {
         M = F->getParent();
+        if (M) {errs() << "FuncAnalysis for F :"<<F->getName().str()<<" module found.";}
         DL = &(M->getDataLayout());
         printWarning = flag;
-	    nodeFactory.setModule(M);
+        nodeFactory.setModule(M);
         nodeFactory.setDataLayout(DL);
         nodeFactory.setGlobalContext(Ctx_);
         nodeFactory.setStructAnalyzer(&(Ctx->structAnalyzer));
         nodeFactory.setGobjMap(&(Ctx->Gobjs));
         VisitIns.clear();
-	    warningSet.clear();
+        warningSet.clear();
     }
-    bool run(bool flag);
+    bool run();
+    int getUninitArg(){return uninitArg.size();}
+    int getUninitOutArg() {return uninitOutArg.size();}
+    int getIgnoreOutArg(){return ignoreOutArg.size();}
+
 };
 class Tarjan {
 private:

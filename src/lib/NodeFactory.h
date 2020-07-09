@@ -45,7 +45,7 @@ public:
 private:
     AndersNodeType type;
     int q;
-    bool isUnionObj;
+    bool isUnOrArrObj;
     bool isArgNode;
     bool isHeapNode;
     NodeIndex idx, mergeTarget;
@@ -64,8 +64,7 @@ public:
     NodeIndex getIndex() const { return idx; }
     const llvm::Value* getValue() const { return value; }
     const unsigned getOffset() const { return offset; }
-    void setUnion(bool _isUnionObj){isUnionObj = _isUnionObj;}
-    const bool isUnion(){return isUnionObj;};
+    void setUnOrArrNode(bool _isUnOrArrObj){isUnOrArrObj = _isUnOrArrObj;}
 
     void setArgNode(bool _isArgNode) {isArgNode = _isArgNode;}
     const bool isArg(){return isArgNode;}
@@ -183,14 +182,15 @@ public:
     bool isObjectNode(NodeIndex i) const {
         return (nodes.at(i).type == AndersNode::OBJ_NODE);
     }
+
+    bool isUnOrArrObjNode(NodeIndex i) const{
+        return nodes.at(i).isUnOrArrObj;
+    }
+    void setUnOrArrObjNode(NodeIndex i){
+        nodes.at(i).setUnOrArrNode(true);
+    }
     bool isValueNode(NodeIndex i) const {
         return (nodes.at(i).type == AndersNode::VALUE_NODE);
-    }
-    bool isUnionObjectNode(NodeIndex i) const{
-        return nodes.at(i).isUnionObj;
-    }
-    void setUnionObjNode(NodeIndex i){
-        nodes.at(i).setUnion(true);
     }
 
     bool isArgNode(NodeIndex i) const{

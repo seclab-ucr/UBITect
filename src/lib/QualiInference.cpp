@@ -479,8 +479,6 @@ void FuncAnalysis::computeQualifier(llvm::Instruction *I, std::vector<int> &in, 
             size_t pos2 = insStr.find('=');
             //OP<<"pos1 = "<<pos1<<", pos2 = "<<pos2<<"\n";
             std::string ptrName = insStr.substr(pos1, pos2 - 3);
-            //OP<<"ptrName = "<<ptrName<<"\n";
-            nodeFactory.setNodeName(valIndex, ptrName);
             NodeIndex objIndex = AndersNodeFactory::InvalidIndex;
             assert(valIndex != AndersNodeFactory::InvalidIndex && "Failed to find alloca value node");
 
@@ -512,17 +510,11 @@ void FuncAnalysis::computeQualifier(llvm::Instruction *I, std::vector<int> &in, 
                 assert(objIndex != AndersNodeFactory::InvalidIndex && "Failed to find alloca obj node");
                 // Non-empty structs
                 uint64_t stSize = stInfo->getExpandedSize();
-                std::string objName = ptrName + "$0$obj";
-                //OP<<"objName = "<<objName<<"\n";
-                nodeFactory.setNodeName(objIndex, objName);
 
                 for (unsigned i = 1; i < stSize; ++i)
                 {
                     //OP<<"struct process, i = "<<i<<"\n";
                     out.at(objIndex + i) = _UD;
-                    std::string objName = ptrName + "$" + std::to_string(i) + "$obj";
-                    //OP<<"objName = "<<objName<<"\n";
-                    nodeFactory.setNodeName(objIndex + i, objName);
                 }
             }
             objIndex = nodeFactory.getObjectNodeFor(I);
@@ -541,13 +533,6 @@ void FuncAnalysis::computeQualifier(llvm::Instruction *I, std::vector<int> &in, 
 
             NodeIndex dstNode = nodeFactory.getValueNodeFor(I);
             assert(dstNode != AndersNodeFactory::InvalidIndex && "Failed to find load value node");
-            //OP<<"numNodes = "<<nodeFactory.getNumNodes()<<"\n";
-            //OP<< "ptr " << opIndex << ", value: "<<valIndex<<"\n";
-            //set name for node:
-            std::string targetName = nodeFactory.getNodeName(srcNode);
-            std::string loadName = targetName + "$obj";
-            nodeFactory.setNodeName(dstNode, loadName);
-            //OP<<"loadName = "<<loadName<<"\n";
 
             if (srcNode <= nodeFactory.getConstantIntNode())
             {
@@ -802,11 +787,6 @@ void FuncAnalysis::computeQualifier(llvm::Instruction *I, std::vector<int> &in, 
             if (!onlyUnion)
                 fieldNum = offsetToFieldNum(I->getOperand(0)->stripPointerCasts(), offset, DL,
                                             &Ctx->structAnalyzer, M);
-            //OP<<"fieldNum = "<<fieldNum<<"\n";
-            std::string srcName = nodeFactory.getNodeName(srcIndex);
-            std::string gepName = srcName + "$" + std::to_string(fieldNum);
-            nodeFactory.setNodeName(dstIndex, gepName);
-            //OP<<"gepName : "<<gepName<<"\n";
 
             int qualiSrc = in.at(srcIndex);
             if (const ConstantExpr *cexpr = dyn_cast<ConstantExpr>(I->getOperand(0)))
@@ -867,28 +847,14 @@ void FuncAnalysis::computeQualifier(llvm::Instruction *I, std::vector<int> &in, 
             NodeIndex dstIndex = nodeFactory.getValueNodeFor(I);
             NodeIndex op0Index = nodeFactory.getValueNodeFor(I->getOperand(0));
             NodeIndex op1Index = nodeFactory.getValueNodeFor(I->getOperand(1));
-            std::string op0Str = nodeFactory.getNodeName(op0Index);
-            std::string op1Str = nodeFactory.getNodeName(op1Index);
             if (isa<ConstantInt>(I->getOperand(0)))
             {
                 ConstantInt *ci = dyn_cast<ConstantInt>(I->getOperand(0));
-                op0Str = ci->getValue().toString(10,true);
             }
             if (isa<ConstantInt>(I->getOperand(1)))
             {
                 ConstantInt *ci = dyn_cast<ConstantInt>(I->getOperand(1));
-                op1Str = ci->getValue().toString(10,true);
             }
-            //OP<<"op0Str = "<<op0Str<<", op1Str = "<<op1Str<<"\n";
-            std::string opStr = "";
-            size_t pos1 = insStr.find('=');
-            std::string temp = insStr.substr(pos1 + 2, insStr.size());
-            size_t pos2 = temp.find(' ');
-            opStr = temp.substr(0, pos2);
-
-            std::string dstStr = op0Str + "$" + opStr + "$" + op1Str;
-            //OP<<"dstStr = "<<dstStr<<"\n";
-            nodeFactory.setNodeName(dstIndex, dstStr);
 
             out.at(dstIndex) = std::min(in.at(op0Index), in.at(op1Index));
             if (in.at(op0Index) == _UNKNOWN)
@@ -936,27 +902,17 @@ void FuncAnalysis::computeQualifier(llvm::Instruction *I, std::vector<int> &in, 
                 //backPropagateReq(I, I->getOperand(1), out);
             }
             out.at(dstIndex) = std::min(in.at(op0Index), in.at(op1Index));
-            //out[dstIndex] = max(out[dstIndex], _UD);
-
-            std::string op0Str = nodeFactory.getNodeName(op0Index);
-            std::string op1Str = nodeFactory.getNodeName(op1Index);
 
             if (isa<ConstantInt>(I->getOperand(0)))
             {
                 ConstantInt *ci = dyn_cast<ConstantInt>(I->getOperand(0));
                 int val = ci->getSExtValue();
-                op0Str = std::to_string(val);
             }
             if (isa<ConstantInt>(I->getOperand(1)))
             {
                 ConstantInt *ci = dyn_cast<ConstantInt>(I->getOperand(1));
                 int val = ci->getSExtValue();
-                op1Str = std::to_string(val);
             }
-
-            std::string dstStr = op0Str + "$icmp$" + op1Str;
-            nodeFactory.setNodeName(dstIndex, dstStr);
-            //OP<<"dstStr = "<<dstStr<<"\n";
 
 #ifdef OUTQ
             OP << "related qualifier out[" << dstIndex << "] = " << out[dstIndex] << "\n";
@@ -987,9 +943,6 @@ void FuncAnalysis::computeQualifier(llvm::Instruction *I, std::vector<int> &in, 
             out.at(dstIndex) = in.at(srcIndex);
             relatedNode[dstIndex].insert(relatedNode[srcIndex].begin(), relatedNode[srcIndex].end());
 
-            std::string srcName = nodeFactory.getNodeName(srcIndex);
-            nodeFactory.setNodeName(dstIndex, srcName);
-//OP<<"dstName = "<<srcName<<"\n";
 #ifdef _RELATED
             OP << "Related nodes:\n";
         for (auto item : relatedNode[dstIndex])
@@ -1026,15 +979,12 @@ void FuncAnalysis::computeQualifier(llvm::Instruction *I, std::vector<int> &in, 
 
                 //OP<<"incomming edge "<<i<<", initIndex in["<<srcIndex<<"]: "<<in[srcIndex]<<"\n";
                 assert(srcIndex != AndersNodeFactory::InvalidIndex && "Failed to find phi src node");
-                std::string phiName = nodeFactory.getNodeName(srcIndex);
                 if (isa<ConstantInt>(value))
                 {
                     ConstantInt *ci = dyn_cast<ConstantInt>(value);
                     int val = ci->getSExtValue();
-                    phiName = std::to_string(val);
                 }
 
-                nameStr = nameStr + "$" + phiName;
                 if (!init)
                 {
                     init = true;
@@ -1045,9 +995,6 @@ void FuncAnalysis::computeQualifier(llvm::Instruction *I, std::vector<int> &in, 
                     out.at(dstIndex) = std::min(out.at(dstIndex), in.at(srcIndex));
                 }
             }
-            //OP<<"namsStr : "<<nameStr<<"\n";
-            nodeFactory.setNodeName(dstIndex, nameStr);
-//out[dstIndex] = max(_UD, out[dstIndex]);
 #ifdef OUTQ
             OP << "related qualifier out[" << dstIndex << "] = " << out[dstIndex] << "\n";
 #endif
@@ -1061,11 +1008,6 @@ void FuncAnalysis::computeQualifier(llvm::Instruction *I, std::vector<int> &in, 
             assert(srcIndex != AndersNodeFactory::InvalidIndex && "Failed to find bitcast src node");
             NodeIndex dstIndex = nodeFactory.getValueNodeFor(I);
             assert(dstIndex != AndersNodeFactory::InvalidIndex && "Failed to find bitcast dst node");
-
-            //OP<<"srcIndedx = "<<srcIndex<<", destIndex = "<<dstIndex<<"\n";
-            std::string srcName = nodeFactory.getNodeName(srcIndex);
-            nodeFactory.setNodeName(dstIndex, srcName);
-            //OP<<"dstName = "<<srcName<<"\n";
 
             //cp the qualifier from before to after, assume there's one obj
             relatedNode[dstIndex].insert(relatedNode[srcIndex].begin(), relatedNode[srcIndex].end());
@@ -1141,11 +1083,6 @@ void FuncAnalysis::computeQualifier(llvm::Instruction *I, std::vector<int> &in, 
 
             NodeIndex srcIndex = nodeFactory.getValueNodeFor(I->getOperand(0));
             assert(srcIndex != AndersNodeFactory::InvalidIndex && "Failed to find inttoptr src node");
-
-            std::string srcName = nodeFactory.getNodeName(srcIndex);
-            nodeFactory.setNodeName(dstIndex, srcName);
-            //OP<<"dstName = "<<srcName<<"\n";
-
             out.at(dstIndex) = in.at(srcIndex);
 #ifdef OUTQ
             OP << "related qualifier out[" << dstIndex << "] = " << out[dstIndex] << "\n";
@@ -1161,10 +1098,6 @@ void FuncAnalysis::computeQualifier(llvm::Instruction *I, std::vector<int> &in, 
             {
                 out.at(dstIndex) = in.at(srcIndex);
             }
-
-            std::string srcName = nodeFactory.getNodeName(srcIndex);
-            nodeFactory.setNodeName(dstIndex, srcName);
-            //OP<<"dstName = "<<srcName<<"\n";
 
 #ifdef OUTQ
             OP << "related qualifier out[" << dstIndex << "] = " << out[dstIndex] << "\n";
@@ -1186,27 +1119,17 @@ void FuncAnalysis::computeQualifier(llvm::Instruction *I, std::vector<int> &in, 
             out.at(dstIndex) = std::min(in.at(srcIndex1), in.at(srcIndex2));
             out.at(dstIndex) = std::min(in.at(conditionIndex), out.at(dstIndex));
 
-            std::string selectName = "sel";
-            std::string op1Name = nodeFactory.getNodeName(srcIndex1);
-            std::string op2Name = nodeFactory.getNodeName(srcIndex1);
 
             if (isa<ConstantInt>(I->getOperand(1)))
             {
                 ConstantInt *ci = dyn_cast<ConstantInt>(I->getOperand(1));
                 int val = ci->getSExtValue();
-                op1Name = std::to_string(val);
             }
             if (isa<ConstantInt>(I->getOperand(2)))
             {
                 ConstantInt *ci = dyn_cast<ConstantInt>(I->getOperand(2));
                 int val = ci->getSExtValue();
-                op2Name = std::to_string(val);
             }
-
-            selectName = selectName + "$" + op1Name;
-            selectName = selectName + "$" + op2Name;
-            //OP<<"selectName : "<<selectName<<"\n";
-            nodeFactory.setNodeName(dstIndex, selectName);
 #ifdef OUTQ
             OP << "related qualifier out[" << dstIndex << "] = " << out[dstIndex] << "\n";
 #endif

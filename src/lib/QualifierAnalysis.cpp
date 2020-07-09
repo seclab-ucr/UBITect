@@ -157,6 +157,7 @@ bool QualifierAnalysis::doFinalization(llvm::Module *M) {
 
 void QualifierAnalysis::run() {
     getGlobals();
+    int counter = 0;
     Tarjan tarjan(Ctx->CallMaps);
     tarjan.getSCC(Ctx->SCC);
 

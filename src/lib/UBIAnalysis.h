@@ -46,7 +46,7 @@ typedef std::unordered_map<std::string, llvm::GlobalVariable*> GObjMap;
 typedef llvm::DenseMap<llvm::Function*, CallInstSet> CallerMap;
 typedef llvm::DenseMap<llvm::CallInst *, FuncSet> CalleeMap;
 //mapping from the function to the functions it calls
-typedef llvm::DenseMap<llvm::Function *, FuncSet> CallMap;
+typedef std::unordered_map<llvm::Function*, std::set<llvm::Function*>> CallMap;
 typedef llvm::DenseMap<llvm::Function *, FuncSet> CalledMap;
 typedef std::unordered_map<std::string, FuncSet> FuncPtrMap;
 
