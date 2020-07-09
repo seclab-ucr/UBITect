@@ -181,7 +181,7 @@ NodeIndex FuncAnalysis::processStruct(const Value* v, const StructType* stType, 
                 
             if (stInfo->isFieldUnion(i))
             {
-                nodeFactory.setUnionObjNode(structObj);
+                nodeFactory.setUnOrArrObjNode(structObj);
                 ptsGraph[structObj].insert(nodeFactory.getUniversalPtrNode());
             }
         }

@@ -53,36 +53,38 @@ private:
     const unsigned offset;
     int storeFlag;
     bool mayNull;
-    
+    std::string name;
+
     std::set<std::string> whiteList;
     std::set<std::string> blackList;
-    AndersNode(AndersNodeType t, unsigned i, const llvm::Value* v = NULL, const unsigned off = 0, const bool _isUnionObj = false, 
-            const bool _isArgNode = false,  bool _isHeapNode = false, int _storeFlag = 0, bool _mayNull = false)
-            : type(t), idx(i), mergeTarget(i), value(v), offset(off), isUnionObj(_isUnionObj), isArgNode(_isArgNode), isHeapNode(_isHeapNode), storeFlag(_storeFlag), mayNull(_mayNull){}
+    AndersNode(AndersNodeType t, unsigned i, const llvm::Value* v = NULL, const unsigned off = 0, const bool _isUnionObj = false,
+               const bool _isArgNode = false,  bool _isHeapNode = false, int _storeFlag = 0, bool _mayNull = false)
+            : type(t), idx(i), mergeTarget(i), value(v), offset(off), isUnOrArrObj(_isUnionObj), isArgNode(_isArgNode), isHeapNode(_isHeapNode), storeFlag(_storeFlag), mayNull(_mayNull){}
 
 public:
     NodeIndex getIndex() const { return idx; }
     const llvm::Value* getValue() const { return value; }
     const unsigned getOffset() const { return offset; }
     void setUnOrArrNode(bool _isUnOrArrObj){isUnOrArrObj = _isUnOrArrObj;}
+    //const bool isUnOrArrNode(){return isUnOrArrObj;};
 
     void setArgNode(bool _isArgNode) {isArgNode = _isArgNode;}
     const bool isArg(){return isArgNode;}
 
     void setHeapNode (bool _isHeapNode) {isHeapNode = _isHeapNode;}
     const bool heapNode(){return isHeapNode;}
-	
+
     void setStoreFlag(int ch) {storeFlag = ch;}
     const int getStoreFlag(){return storeFlag;}
-    
+
     bool listEmpty(){return whiteList.empty() && blackList.empty();}
-    void setWhiteList(std::set<std::string> &list){whiteList = list;}
-    void setBlackList(std::set<std::string> &list){blackList = list;}
+    void setWhiteList(std::set<std::string> &list){whiteList.insert(list.begin(), list.end());}
+    void setBlackList(std::set<std::string> &list){blackList.insert(list.begin(), list.end());}
     std::set<std::string> getWhiteList(){return whiteList;}
     std::set<std::string> getBlackList(){return blackList;}
 
-    void setMayNull(bool _mayNull) {mayNull = _mayNull;}
-    bool getMayNull() {return mayNull;}
+    void setName(std::string _name) {name = _name;}
+    std::string getName() {return name;}
     friend class AndersNodeFactory;
 };
 
@@ -182,15 +184,21 @@ public:
     bool isObjectNode(NodeIndex i) const {
         return (nodes.at(i).type == AndersNode::OBJ_NODE);
     }
-
+    bool isValueNode(NodeIndex i) const {
+        return (nodes.at(i).type == AndersNode::VALUE_NODE);
+    }
     bool isUnOrArrObjNode(NodeIndex i) const{
         return nodes.at(i).isUnOrArrObj;
     }
     void setUnOrArrObjNode(NodeIndex i){
         nodes.at(i).setUnOrArrNode(true);
     }
-    bool isValueNode(NodeIndex i) const {
-        return (nodes.at(i).type == AndersNode::VALUE_NODE);
+
+    void setNodeName(NodeIndex i, std::string name) {
+        nodes.at(i).setName(name);
+    }
+    std::string getNodeName(NodeIndex i) {
+        return nodes.at(i).getName();
     }
 
     bool isArgNode(NodeIndex i) const{
@@ -209,30 +217,28 @@ public:
     }
 
     int getStored (NodeIndex i) const{
-	return nodes.at(i).storeFlag;
+        return nodes.at(i).storeFlag;
     }
     void setStored (NodeIndex i, int ch) {
-	nodes.at(i).setStoreFlag(ch);
+        nodes.at(i).setStoreFlag(ch);
     }
-    
+
     void setWL(NodeIndex i, std::set<std::string> list) {
-	nodes.at(i).setWhiteList(list);
+        nodes.at(i).setWhiteList(list);
     }
     void setBL(NodeIndex i, std::set<std::string> list) {
         nodes.at(i).setBlackList(list);
     }
     std::set<std::string> getWL(NodeIndex i) {
-	return nodes.at(i).getWhiteList();
+        return nodes.at(i).getWhiteList();
     }
     std::set<std::string> getBL(NodeIndex i) {
-	return nodes.at(i).getBlackList();
+        return nodes.at(i).getBlackList();
     }
     bool listEmpty(NodeIndex i) {
-	return nodes.at(i).listEmpty();
+        return nodes.at(i).listEmpty();
     }
-    void setMayNull(NodeIndex i) {nodes.at(i).setMayNull(true);}
-    bool getMayNull(NodeIndex i) {return nodes.at(i).getMayNull();}
-    
+
     NodeIndex getOffsetObjectNode(NodeIndex n, int offset) const {
         //llvm::errs()<<"inside getOffsetObjectNode:\n";
         if (!isObjectNode(n)) {
@@ -242,10 +248,10 @@ public:
                 dumpNode(i);
         }
         //llvm::errs()<<"n = "<<n<<", offset = "<<offset<<"\n";
-        if (nodes.at(n).isUnionObj)
+        if (nodes.at(n).isUnOrArrObj)
             return n;
         assert(isObjectNode(n + offset) &&
-            ((nodes.at(n).getOffset() + offset) == nodes.at(n + offset).getOffset()));
+               ((nodes.at(n).getOffset() + offset) == nodes.at(n + offset).getOffset()));
         //llvm::errs()<<"n+offset"<<n+offset<<"\n";
         return n + offset;
     }
@@ -253,7 +259,7 @@ public:
     unsigned getObjectSize(NodeIndex i) const {
         assert(isObjectNode(i));
         unsigned offset = nodes.at(i).getOffset();
-        
+
         while ((i+1) < nodes.size() &&
                nodes.at(i+1).type == AndersNode::OBJ_NODE &&
                nodes.at(i+1).getOffset() == (offset + 1)) {

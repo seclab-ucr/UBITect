@@ -1324,7 +1324,7 @@ void FuncAnalysis::computeQualifier(llvm::Instruction *I, std::vector<int> &in, 
             {
                 //OP<<*I<<"\n";
                 StringRef fName = Func->getName();
-                OP << "possible function:" <<Func<<": "<<fName.str() << ", scopeName: " << getScopeName(Func, Ctx->funcToMd, Ctx->Funcs) << "\n";
+                //OP << "possible function:" <<Func<<": "<<fName.str() << ", scopeName: " << getScopeName(Func, Ctx->funcToMd, Ctx->Funcs) << "\n";
                 if (Ctx->HeapAllocFuncs.count(fName.str()))
                 {
                     out.at(dstNode) = _ID;
