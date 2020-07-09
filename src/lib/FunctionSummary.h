@@ -274,6 +274,9 @@ public:
 		stackVar = 0;
 		uninitStackVar = 0;
     }
+    bool isEmpty() {
+        return !(reqVec.size()>0 || updateVec.size()>0);
+    }
     void copySummary(Summary &S1, Summary &S, llvm::Function *F)
     {
     	unsigned numNodes = S.noNodes;

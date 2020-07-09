@@ -140,6 +140,7 @@ struct GlobalContext {
     // StructAnalyzer
     StructAnalyzer structAnalyzer;
     std::map<const llvm::StructType*, std::set<int>> usedField;
+    std::unordered_map<llvm::Function*, std::set<std::pair<std::string, std::string>>> fToWarns;
 };
 
 class IterativeModulePass {

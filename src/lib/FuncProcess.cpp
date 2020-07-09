@@ -461,7 +461,7 @@ void FuncAnalysis::processFuncs(llvm::Instruction *I, llvm::Function *Callee, bo
                     }
                }
 #endif
-    if (Ctx->PreSumFuncs.count(Callee->getName().str()) || Callee->getName().str().find("printf") != std::string::npos) {
+    if (Callee->getName().str().find("printf") != std::string::npos) {
         for (int argNo = 0; argNo < CI->getNumArgOperands(); argNo++) {
             NodeIndex argNode = nodeFactory.getValueNodeFor(CI->getArgOperand(argNo));
             for (auto obj : nPtsGraph[I][argNode])
@@ -501,32 +501,6 @@ void FuncAnalysis::processFuncs(llvm::Instruction *I, llvm::Function *Callee, bo
         if (FIter != Ctx->Funcs.end())
         {
             Callee = FIter->second;
-        }
-    }
-    OP << "Callee: " << Callee << ": " << Callee->getName().str() << "\n";
-    if (Ctx->incAnalysis && Ctx->FSummaries.find(Callee) == Ctx->FSummaries.end())
-    {
-        //assert(Ctx->modifiedFuncs.find(Callee) == Ctx->modifiedFuncs.end() && "modifiedFuncs not summarized before being called.");
-        std::string fname = getScopeName(Callee, Ctx->funcToMd, Ctx->Funcs);
-
-        size_t pos = fname.find(curVersion);
-        if (pos != std::string::npos)
-        {
-            fname.replace(pos, curVersion.size(), prevVersion);
-        }
-
-        std::string sFile = oldDir + fname + ".sum";
-        OP << "[[callee's summary file :" << sFile << "\n";
-        std::ifstream ifile(sFile);
-        if (ifile)
-        {
-            boost::archive::text_iarchive ia(ifile);
-            ia >> Ctx->FSummaries[Callee];
-            ifile.close();
-            OP << "[[Summary for  " << fname << " loaded!\n";
-        }
-        else {
-            OP<<"[[Summary not existed.\n";
         }
     }
 
@@ -1215,7 +1189,7 @@ void FuncAnalysis::checkFuncs(llvm::Instruction *I, llvm::Function *Callee)
 		checkSize = std::min(checkSize, objSize);
                 for (unsigned i = 0; i < checkSize; i++)
                 {
-                    if (nodeFactory.isUnionObjectNode(obj))
+                    if (nodeFactory.isUnOrArrObjNode(obj))
                     {
 			if (nQualiArray[I].at(obj) == _ID) {
 	                	insertUninit(I, obj, uninitArg);

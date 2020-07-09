@@ -265,7 +265,7 @@ bool QualifierAnalysis::runOnFunction(llvm::Function *f, bool flag) {
     return false;
 }
 
-bool FuncAnalysis::run(bool flag) {
+bool FuncAnalysis::run() {
     buildPtsGraph();
     initSummary();
     computeAASet();
@@ -711,7 +711,7 @@ PtsGraph FuncAnalysis::processInstruction(Instruction *I, PtsGraph &in) {
                         unsigned newOffset = nodeFactory.getObjectOffset(obj);
                         for (unsigned i = 0; i < stSize; i++) {
                             if (stInfo->isFieldUnion(i))
-                                nodeFactory.setUnOrArrNode(obj - newOffset + i);
+                                nodeFactory.setUnOrArrObjNode(obj - newOffset + i);
                         }
                         if (nodeFactory.isHeapNode(obj)) {
                             for (unsigned i = 0; i < stSize; i++) {
