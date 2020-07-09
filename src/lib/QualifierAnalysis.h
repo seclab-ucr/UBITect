@@ -51,9 +51,9 @@ private:
     void ptsJoin(PtsGraph&, PtsGraph&);
     //Used by qualifier inference 
     void setGlobalQualies(llvm::Function *, AndersNodeFactory &, NodeToPtsGraph &, int *);
-    void qualiJoin(int *, int *, unsigned);
-    void updateJoin(int *, int *, unsigned);
-    void computeAASet(llvm::Function *, AndersNodeFactory &, NodeToPtsGraph &, NodeToAAMap &, NodeIndex);
+    //void qualiJoin(int *, int *, unsigned);
+    //void updateJoin(int *, int *, unsigned);
+    //void computeAASet(llvm::Function *, AndersNodeFactory &, NodeToPtsGraph &, NodeToAAMap &, NodeIndex);
     //void updateJoin(int *, int *, unsigned);
     
 
@@ -72,6 +72,8 @@ public:
     void calSumForScc (std::vector<std::vector<llvm::Function*>>&);
     void calDepFuncs();
     void finalize();
+    void getGlobals();
+    void run();
 };
 
 class FuncAnalysis {
@@ -93,6 +95,7 @@ private:
     BBToQualifier outQualiArray;
     
     Summary fSummary;
+    bool printWarning;
     
     std::map<llvm::Instruction*, int *>nUpdate;
     std::set<llvm::Instruction*> VisitIns;
@@ -160,25 +163,53 @@ private:
     void initSummary();
 public:
     
-    FuncAnalysis(llvm::Function *F_, GlobalContext *Ctx_)
+    FuncAnalysis(llvm::Function *F_, GlobalContext *Ctx_, bool flag)
             : F(F_), Ctx(Ctx_) {
         M = F->getParent();
         DL = &(M->getDataLayout());
-	nodeFactory.setModule(M);
+        printWarning = flag;
+	    nodeFactory.setModule(M);
         nodeFactory.setDataLayout(DL);
         nodeFactory.setGlobalContext(Ctx_);
         nodeFactory.setStructAnalyzer(&(Ctx->structAnalyzer));
         nodeFactory.setGobjMap(&(Ctx->Gobjs));
         VisitIns.clear();
-	warningSet.clear();
+	    warningSet.clear();
     }
     bool run(bool flag);
-    int getUninitArg(){return uninitArg.size();}
-    int getUninitOutArg() {return uninitOutArg.size();}
-    int getIgnoreOutArg(){return ignoreOutArg.size();}
-    
 };
+class Tarjan {
+private:
+    std::unordered_map<llvm::Function*, std::set<llvm::Function*>> depCG;
+    std::unordered_set<llvm::Function *> funcs;
 
+    std::unordered_set<llvm::Function *> depVisit;
+    std::stack<llvm::Function *> Stack;
+    std::unordered_map<llvm::Function*, int> dfn;
+    std::unordered_map<llvm::Function*, int> low;
+    std::unordered_map<llvm::Function*, bool> inStack;
+    std::vector<llvm::Function*> sc;
+    std::vector<std::vector<llvm::Function*>> SCC;
+    int ts = 1;
+    int ind = 0;
+    int sccSize = 0;
+    int rec = 0;
+
+    int biggest = 0;
+public:
+    Tarjan(std::unordered_map<llvm::Function*, std::set<llvm::Function*>> _depCG) {
+        depCG = _depCG;
+        for (auto item : _depCG) {
+            funcs.insert(item.first);
+            for (auto callee : item.second) {
+                funcs.insert(callee);
+            }
+        }
+        depVisit.clear();
+    };
+    void getSCC(std::vector<std::vector<llvm::Function*>> &);
+    void dfs(llvm::Function *F);
+};
 int64_t getGEPInstFieldNum(const llvm::GetElementPtrInst* gepInst,
     const llvm::DataLayout* dataLayout, const StructAnalyzer& structAnalyzer, llvm::Module* module);
 

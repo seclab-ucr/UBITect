@@ -94,6 +94,7 @@ struct GlobalContext {
     std::set<llvm::Function* > ReadyList;
     //calculate the # of called functions of the caller
     std::map<llvm::Function*, int> RemainedFunction;
+    std::unordered_set<llvm::Function* > indFuncs;
 
     std::vector<std::vector<llvm::Function*>> SCC;
     std::set<llvm::Function*> rec;
@@ -161,9 +162,9 @@ public:
     { return false; }
 
     virtual void run(ModuleList &modules);
-    virtual void collectRemaining(){}
-    virtual void calDepFuncs(){}
-    virtual void finalize(){}
+//    virtual void collectRemaining(){}
+//    virtual void calDepFuncs(){}
+//    virtual void finalize(){}
 };
 
 

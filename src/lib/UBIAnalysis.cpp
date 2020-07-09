@@ -79,7 +79,7 @@ void IterativeModulePass::run(ModuleList &modules) {
  
     //calculate the scc iteratively
     //adding the intermediate step to initialize circulate functions
-    collectRemaining();
+    //collectRemaining();
     //do module pass again and deal with callers of loop enrolled functions
     changed = 1;
     while (changed) {
@@ -109,7 +109,7 @@ void IterativeModulePass::run(ModuleList &modules) {
         }
     }
     OP << "Finalizing ...\n";
-    finalize();
+    //finalize();
     OP << "[" << ID << "] Done!\n\n";
 }
 
@@ -120,7 +120,6 @@ void LoadStaticData(GlobalContext *GCtx) {
     SetCopyFuncs(GCtx->CopyFuncs);
     SetTransferFuncs(GCtx->TransferFuncs);
     SetObjSizeFuncs(GCtx->ObjSizeFuncs);
-	//SetStrFuncs(GCtx->StrFuncs);
 }
 
 void InitReadyFunction(GlobalContext *Ctx) {
@@ -128,11 +127,11 @@ void InitReadyFunction(GlobalContext *Ctx) {
         for (Function &f : *ml.first) {
             Function *F = &f;
             if (!F->empty()) {
-                //initialize the readylist;
-                if (Ctx->CallMaps.find(F) == Ctx->CallMaps.end()) {
-                    Ctx->ReadyList.insert(F);
-                } 
                 Ctx->Visit[F] = false;
+                if (Ctx->CallMaps.find(F) == Ctx->CallMaps.end() &&
+                    Ctx->CalledMaps.find(F) == Ctx->CalledMaps.end()) {
+                    Ctx->indFuncs.insert(F);
+                }
             }
         }
     }
@@ -183,7 +182,8 @@ int main(int argc, char **argv){
         InitReadyFunction(&GlobalCtx);
         OP << GlobalCtx.Visit.size() << " functions in total.\n";
         QualifierAnalysis QAPass(&GlobalCtx);
-        QAPass.run(GlobalCtx.Modules);
+        QAPass.run();
+        //QAPass.run(GlobalCtx.Modules);
     }
     
     return 0;
