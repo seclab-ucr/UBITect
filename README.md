@@ -2,13 +2,10 @@
 
 Authors: Yizhuo Zhai, Yu Hao, Hang Zhang, Daimeng Wang, Chengyu Song, Zhiyun Qian, Mohsen Lesani, Srikanth V. Krishnamurthy, Paul Yu
 
-UBITect is a UBI bug finding tool which combines flow-sensitive type qualifier analysis and symbolic execution to perform precise and scalable UBI bug detection. For more details, please refer to our paper. This repo is our implementation, we conducted our experiment on machines with Intel(R) Xeon(R) E5-2695v4 processors and 256GB RAM. The operating system is the 64 bit Ubuntu 16.04 LTS. Please contact the following author for any questions:
-```
-Yizhuo Zhai
-Department of Computer Science and Engineering
-University of California, Riverside
-yzhai003 at ucr dot edu
-```
+UBITect is a UBI bug finding tool which combines flow-sensitive type qualifier analysis and symbolic execution to perform precise and scalable UBI bug detection. For more details, please refer to our paper. This repo is our implementation, we conducted our experiment on machines with Intel(R) Xeon(R) E5-2695v4 processors and 256GB RAM. The operating system is the 64 bit Ubuntu 16.04 LTS. 
+
+Besides Github, you can also get the released version of UBITect from Zenodo: https://zenodo.org/record/3905204#.XxD4fC3MxQI
+
 ## Files
 |  
 |-src: Qualifier Inference code for UBITect  \
