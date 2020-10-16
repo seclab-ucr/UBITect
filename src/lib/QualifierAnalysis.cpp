@@ -23,6 +23,7 @@
 #include "Helper.h"
 
 #define CAL_STACKVAR
+#define RUN_ON_FUNC 
 using namespace llvm;
 
 std::string testDir = getCurrentWorkingDir() + "/Summary/";
