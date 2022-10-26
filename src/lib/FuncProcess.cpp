@@ -1125,7 +1125,7 @@ void FuncAnalysis::checkFuncs(llvm::Instruction *I, llvm::Function *Callee)
         }
         
         NodeIndex argNode = nodeFactory.getValueNodeFor(CI->getArgOperand(argNo));
-        NodeIndex sumArgNode = Ctx->FSummaries[Callee].args[argNo].getNodeIndex();
+        NodeIndex sumArgNode = Ctx->FSummaries[Callee].args[argNo+1].getNodeIndex();
         assert(argNode != AndersNodeFactory::InvalidIndex && "Failed to find arg node");
 
         //else it's the pointer type
@@ -1356,7 +1356,7 @@ void FuncAnalysis::propFuncs(llvm::Instruction *I, llvm::Function *Callee, int* 
     for (int argNo = 0; argNo < CI->getNumArgOperands(); argNo++)
     {
         NodeIndex argNode = nodeFactory.getValueNodeFor(CI->getArgOperand(argNo));
-        NodeIndex sumArgNode = Ctx->FSummaries[Callee].sumNodeFactory.getValueNodeFor(calleeArgs.at(argNo));
+        NodeIndex sumArgNode = Ctx->FSummaries[Callee].sumNodeFactory.getValueNodeFor(calleeArgs.at(argNo+1));
         NodeIndex sumArgObjNode = 0;
         for (auto sumObj : Ctx->FSummaries[Callee].sumPtsGraph[sumArgNode])
         {
